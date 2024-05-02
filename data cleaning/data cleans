@@ -1,0 +1,18 @@
+
+import re 
+
+test_tweet = 'bala die blalalal "source":fhsjkdhfew, Hoeras'
+
+def begone_variables(tweet: str) -> str:
+    '''
+    :param tweet: string representation of tweet
+    gets rid of unnecessary variables
+    '''
+    #source variable begone
+    new_tweet: str = re.sub('\"source\":[^,]+,', "", tweet)
+
+    
+
+    return new_tweet
+
+print(begone_variables(test_tweet))
