@@ -23,7 +23,7 @@
          "favourites_count":394,
          "statuses_count":73224,
          "created_at":"Tue Oct 18 12:55:25 +0000 2011",
-         "lang":null}
+         "lang":null},
 "is_quote_status":false,
 "quote_count":0,
 "reply_count":0,
@@ -33,7 +33,7 @@
 "entities":{
     "hashtags":[],
     "user_mentions":[],
-    "symbols":[]}
+    "symbols":[]},
 "possibly_sensitive":false,
 "filter_level":"low",
 "lang":"es",
