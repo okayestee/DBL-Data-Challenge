@@ -1,7 +1,9 @@
-
 from os import read
 import re 
 import json
+
+
+
 
 def remove_variables(tweet: str) -> str:
     '''
@@ -9,7 +11,7 @@ def remove_variables(tweet: str) -> str:
     :param tweet: string representation of tweet
     '''
 
-    variables_to_remove: list[str] = ["source", "location", "url", "protected", "utc_offset", "time_zone", "geo_enabled", "contributors_enabled", "is_translator", "profile_background_image_url", "profile_background_image_url_https", "profile_background_tile", "profile_link_color", "profile_sidebar_border_color", "profile_sidebar_fill_color", "profile_text_color", "profile_use_background_image", "profile_image_url", "profile_image_url_https", "profile_banner_url", "default_profile", "default_profile_image", "following", "follow_request_sent", "notifications"]
+    variables_to_remove: list[str] = ["source", "location", "url", "protected", "utc_offset", "time_zone", "geo_enabled", "contributors_enabled", "is_translator", "profile_background_color", "profile_background_image_url", "profile_background_image_url_https", "profile_background_tile", "profile_link_color", "profile_sidebar_border_color", "profile_sidebar_fill_color", "profile_text_color", "profile_use_background_image", "profile_image_url", "profile_image_url_https", "profile_banner_url", "default_profile", "default_profile_image", "following", "follow_request_sent", "notifications"]
 
     # Removes the following variables from tweet string:
     for variable in variables_to_remove:
@@ -18,15 +20,18 @@ def remove_variables(tweet: str) -> str:
 
     return tweet
 
+
+
 def read_data_file(path: str)-> str:
     """
     reads the data 
     :param path: path to the data to be loaded
     """
-    with open(path) as file:
+    with open(path, 'r') as file:
         for line in file:
-            data = line
-    return data
+            tweet = line
+        return tweet
+
 
 
 def check_tweet(tweet: str) -> bool:
@@ -47,13 +52,19 @@ def check_tweet(tweet: str) -> bool:
         return False
 
 
-def clean_file(path:str) -> None:
+
+def clean_file(old_path: str, new_path:str) -> None:
     """
-    
+
     """
-    with open(path) as file:
-        print(file.readlines())
+    with open(old_path, 'r') as file:
+       lines = file.readlines()
 
+    with open(new_path, 'w') as new_file:
+        for number, line in enumerate(lines):
+            if check_tweet(line) == True:
+                new_file.write(remove_variables(line))
+            else:
+                new_file.write('')
 
-
-clean_file('data_cleaning/test tweet 4')
+clean_file('data cleaning/../data/airlines-1558527599826.json', 'data cleaning/new file.json')
