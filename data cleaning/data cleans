@@ -1,14 +1,14 @@
 from os import read
 import re 
-import json
 
 
 
 
 def remove_variables(tweet: str) -> str:
     '''
-    gets rid of unnecessary variables
+    Takes a tweet as a string and removes unnecessary variables
     :param tweet: string representation of tweet
+    :returns: a string containing the cleaned version of the tweet
     '''
 
     variables_to_remove: list[str] = ["source", "location", "url", "protected", "utc_offset", "time_zone", "geo_enabled", "contributors_enabled", "is_translator", "profile_background_color", "profile_background_image_url", "profile_background_image_url_https", "profile_background_tile", "profile_link_color", "profile_sidebar_border_color", "profile_sidebar_fill_color", "profile_text_color", "profile_use_background_image", "profile_image_url", "profile_image_url_https", "profile_banner_url", "default_profile", "default_profile_image", "following", "follow_request_sent", "notifications"]
@@ -22,10 +22,11 @@ def remove_variables(tweet: str) -> str:
 
 
 
-def read_data_file(path: str)-> str:
+def read_data_file(path: str)-> str: # No longer necessary (only intended for testing purposes)
     """
-    reads the data 
+    Reads the data from the file located at path
     :param path: path to the data to be loaded
+    :returns: a string that contains the last line in the file
     """
     with open(path, 'r') as file:
         for line in file:
@@ -36,32 +37,42 @@ def read_data_file(path: str)-> str:
 
 def check_tweet(tweet: str) -> bool:
     """
-    checks whether the tweet can be discarded by looking at media and language
+    Checks whether the tweet should be kept by looking at media and language
     :param tweet: string representation of tweet
     :returns: A boolean value representing wether we want to keep the tweet in the data
     """
     media_regex = '\"media\":'
     en_lang_regex = '\"lang\":\"en\",'
-    #null_lang_regex = '\"lang\"null,'
 
+    # Check whether the tweet has media
     if len(re.findall(media_regex, tweet)) > 0:
         return False
+    # Check whether the tweet is in english
     elif len(re.findall(en_lang_regex, tweet)) > 0:
         return True
     else:
         return False
+    
+    # Still need to check for duplicates somehow
+    # Also need to decide if and how to handle missing data
 
 
 
 def clean_file(old_path: str, new_path:str) -> None:
     """
-
+    Replaces the json file from old_path with a cleaned version of the file at new_path
+    :param old_path: the path to the file that is to be cleaned
+    :param new_path: the path where the new cleaned file will be generated
     """
+    # Get each individual line from the file
     with open(old_path, 'r') as file:
        lines = file.readlines()
 
+    # Write the cleaned version of the lines into the new file
     with open(new_path, 'w') as new_file:
         for number, line in enumerate(lines):
+
+            # Checks if the tweet should be kept and if so adds it to the new file
             if check_tweet(line) == True:
                 new_file.write(remove_variables(line))
             else:
