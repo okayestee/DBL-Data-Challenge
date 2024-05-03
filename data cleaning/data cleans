@@ -24,9 +24,10 @@ def remove_variables(tweet: str) -> str:
 
     return tweet
 
-def read_data_file(path: str):
+def read_data_file(path: str)-> str:
     """
-    
+    :param path: path to the data to be loaded
+    reads the data 
     """
     with open(path) as file:
         data =json.load(file)
