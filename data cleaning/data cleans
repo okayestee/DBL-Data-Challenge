@@ -32,3 +32,13 @@ def read_data_file(path: str)-> str:
 
 
 print(read_data_file('data cleaning/revisited tweet'))
+
+
+def check_tweet(tweet: str) -> bool:
+    """
+    :param tweet: string representation of tweet
+    checks if the tweet is useful by looking at media and language
+    """
+    media_regex = '\"media\":\[[^,]+\],'
+    en_lang_regex = '\"lang\":\"en\",'
+    null_lang_regex = '\"lang\"null,'
