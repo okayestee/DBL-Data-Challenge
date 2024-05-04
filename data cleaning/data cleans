@@ -1,6 +1,7 @@
 from os import read
 import re 
-
+import fileinput
+from typing import Iterator  
 
 
 
@@ -78,4 +79,62 @@ def clean_file(old_path: str, new_path:str) -> None:
             else:
                 new_file.write('')
 
-clean_file('data cleaning/../data/airlines-1558527599826.json', 'data cleaning/new file.json')
+#clean_file('data cleaning/../data/airlines-1558527599826.json', 'data cleaning/new file.json')
+
+
+def find_duplicate(tweet: str, lines: list[str]) -> list:
+    '''
+    Finds duplicate tweets in a list of tweets as strings and returns there index on a list
+    :param tweet: the tweet you want to find duplicates of
+    :param lines: list with all tweets
+    '''
+    text_regex = '\"text\":\"[^\"]+\",'
+    user_name_regex = '\"name\":[^,]+,'
+    tweet_id_regex = '\"id\":.+,'
+    timestamp_ms_regex = '\"timestamp_ms\":.+'
+    
+    # Initialize a list for keeping track of duplicates  
+    index_duplicates = list()
+    
+    # Iterate through all lines
+    for index in range(0, len(lines)):
+        line = lines[index]
+        
+        # Checks if it is a different tweet in the json file
+        if str(re.search(tweet_id_regex, tweet)) != str(re.search(tweet_id_regex, line)):
+            
+            # Checks whether the other tweet is a duplicate, if so add it to the duplicates list
+            if str(re.search(text_regex, tweet)) == str(re.search(text_regex, line)) and str(re.search(user_name_regex, tweet)) == str(re.search(user_name_regex, line)) and re.findall(timestamp_ms_regex, tweet)[-1] == re.findall(timestamp_ms_regex, line)[-1]:
+                index_duplicates.append(index)
+        
+    return index_duplicates
+    
+
+def is_retweet(line: str) -> bool:
+    """
+    Tests if tweet is a retweet
+    :param line: tweet in string representation
+    """
+    rt_regex = '\"text\":\"RT '
+    #checks if text starts with RT to signal that it is a retweet
+    if len(re.findall(rt_regex, line)) > 0:
+        return True
+    return False
+
+def make_file_iterator(old_path: str ) -> Iterator:
+    """
+    Replaces the json file from old_path with a cleaned version of the file at new_path
+    :param old_path: the path to the file that is to be cleaned
+    :param new_path: the path where the new cleaned file will be generated
+    """
+    # Get each individual line from the file
+
+    
+
+    return fileinput.input(old_path)
+    
+#print(find_duplicate_ids(TEST_clean_file('data cleaning/test tweet 3')))
+#print(find_duplicate(TEST_clean_file('data cleaning/test tweet 3')[1], TEST_clean_file('data cleaning/test tweet 3')))
+#print(find_duplicate(TEST_clean_file('data cleaning/test tweet 3')[0], TEST_clean_file('data cleaning/test tweet 3')))
+for line in make_file_iterator('data cleaning/test tweet 3'):
+    print(line)
