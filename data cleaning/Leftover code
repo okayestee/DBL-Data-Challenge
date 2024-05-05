@@ -1,0 +1,52 @@
+import re
+
+def is_retweet(line: str) -> bool:
+    """
+    Tests if tweet is a retweet
+    :param line: tweet in string representation
+    """
+    rt_regex = '\"text\":\"RT '
+    #checks if text starts with RT to signal that it is a retweet
+    if len(re.findall(rt_regex, line)) > 0:
+        return True
+    return False
+
+# Code for checking duplicates
+'''
+#go over every file to compare them
+for line in tweets_list:
+
+    # Checks if it is a different tweet
+    if str(re.search(tweet_id_regex, tweet)) != str(re.search(tweet_id_regex, line)) and not str(re.search(tweet_id_regex, tweet)) in ids_to_remove:
+
+    # Checks whether the other tweet is a duplicate, if so add it to the duplicates list
+        if str(re.search(text_regex, tweet)) == str(re.search(text_regex, line)) and str(re.search(user_name_regex, tweet)) == str(re.search(user_name_regex, line)) and re.findall(timestamp_ms_regex, tweet)[-1] == re.findall(timestamp_ms_regex, line)[-1]:
+            ids_to_remove.append(str(re.search(tweet_id_regex, line)))
+'''
+
+# Function for detecting duplicates
+'''def find_duplicate(tweet: str, path: str) -> list:
+    
+    #Finds duplicate tweets in a list of tweets as strings and returns there index on a list
+    #:param tweet: the tweet you want to find duplicates of
+    #:param lines: list with all tweets
+    
+    text_regex = '\"text\":\"[^\"]+\",'
+    user_name_regex = '\"name\":[^,]+,'
+    tweet_id_regex = '\"id\":.+,'
+    timestamp_ms_regex = '\"timestamp_ms\":.+'
+    
+    # Initialize a list for keeping track of duplicates  
+    id_duplicates = list()
+    
+    lines = make_file_iterator(path)
+    # Iterate through all lines
+    for line in lines:        
+        # Checks if it is a different tweet in the json file
+        if str(re.search(tweet_id_regex, tweet)) != str(re.search(tweet_id_regex, line)):
+            
+            # Checks whether the other tweet is a duplicate, if so add it to the duplicates list
+            if str(re.search(text_regex, tweet)) == str(re.search(text_regex, line)) and str(re.search(user_name_regex, tweet)) == str(re.search(user_name_regex, line)) and re.findall(timestamp_ms_regex, tweet)[-1] == re.findall(timestamp_ms_regex, line)[-1]:
+                id_duplicates.append(str(re.search(tweet_id_regex, line)))
+        
+    return id_duplicates'''
