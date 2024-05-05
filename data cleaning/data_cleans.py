@@ -125,7 +125,7 @@ def check_file(path: str) -> None:
             if current_tweet_variables[0] == 'None' or current_tweet_variables[1] == 'None' or current_tweet_variables[2] == 'None':
                 continue
 
-            if current_tweet_variables not in make_file_iterator(f'{path}/../tweet_variables'):
+            if current_tweet_variables not in make_tweet_list(f'{path}/../tweet_variables'):
                 # if it's new, add it to the list we've seen
                 store_tweet_variables(current_tweet_variables, path)
 
@@ -150,12 +150,6 @@ def get_tweet_variables(tweet: str) -> list[str]:
     return current_tweet_variables
 
 
-#for file in file_paths_list('data cleaning/../data'):
-#    print(len(find_duplicate(file)))
-
-#find_duplicate('data cleaning/Test tweet 3.json')
-
-
 
 def clean_all_files(path: str) -> None:
     '''
@@ -163,8 +157,11 @@ def clean_all_files(path: str) -> None:
     :param path: path to the data folder
     '''
     file_path_list = file_paths_list(path)
-    for file_path in file_path_list:
-        check_file(file_path)
+    #for file_path in file_path_list:
+    #    check_file(file_path)
+
+    tweet_variables = make_tweet_list(f'{path}/tweet_variables')
+
     # Iterates through every file
     for file_path in file_path_list:
 
@@ -173,7 +170,10 @@ def clean_all_files(path: str) -> None:
         with open(f'{path}/airline_data.json', 'a') as new_file:
             for tweet in lines:
                 # Checks if the tweet should be kept and if so adds it to the new file
-                if str(get_tweet_variables(tweet)) in make_file_iterator(f'{path}/tweet_variables'):
+
+                print(str(get_tweet_variables(tweet)) + '\n' + make_tweet_list(f'{path}/tweet_variables')[0])
+
+                if str(get_tweet_variables(tweet)) in tweet_variables: # NEVER TRUE FOR SOME REASON --- FIX THIS!!
                     new_file.write(remove_variables(tweet))
 
     print(f"All files cleaned and inserted into {path}/airline_data.json")
