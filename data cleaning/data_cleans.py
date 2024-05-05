@@ -2,8 +2,7 @@ from os import read
 import re 
 import fileinput
 from typing import Iterator
-import os  
-
+import os
 
 
 def remove_variables(tweet: str) -> str:
@@ -90,27 +89,6 @@ def make_file_iterator(path: str) -> Iterator:
 
 
 
-def clean_all_files(path: str) -> None:
-    '''
-    Cleans all data and adds it to a big file
-    :param path: path to the data folder
-    '''
-    tweet_id_regex = '\"id\":[0-9]+,'
-    file_path_list = file_paths_list(path)
-
-    # Iterates through every file
-    for file_path in file_path_list:
-
-        bad_tweets: list = ids_to_remove(file_path)
-        lines = make_file_iterator(file_path)
-
-        with open(f'{path}/airline_data.json', 'a') as new_file:
-            for tweet in lines:
-                # Checks if the tweet should be kept and if so adds it to the new file
-                if str(re.search(tweet_id_regex, tweet)) not in bad_tweets:
-                    new_file.write(remove_variables(tweet))
-
-    print(f"All files cleaned and inserted into {path}/airline_data.json")
 
 
 def file_paths_list(path_to_data_folder: str) -> list:
@@ -122,22 +100,83 @@ def file_paths_list(path_to_data_folder: str) -> list:
 
 
 
-def ids_to_remove(file_path: str) -> list[str]:
+def check_file(path: str) -> None:
+    
+    #Finds duplicate tweets in a list of tweets as strings and returns there index on a list
+    #:param tweet: the tweet you want to find duplicates of
+    #:param lines: list with all tweets
+    
+   
+    
+    # Initialize a list for keeping track of duplicates  
+    lines = make_tweet_list(path)
+    
+    with open(f'{path}/../tweet_variables', 'a') as new_file:
+            # Checks if the tweet should be kept and if so adds it to the new file
+            new_file.write('') 
+    
+    # go through all lines
+    for tweet in lines:
+
+        if check_tweet(tweet):
+            # check if we've seen a duplicate of it before
+            current_tweet_variables: list[str] = get_tweet_variables(tweet)
+
+            if current_tweet_variables[0] == 'None' or current_tweet_variables[1] == 'None' or current_tweet_variables[2] == 'None':
+                continue
+
+            if current_tweet_variables not in make_file_iterator(f'{path}/../tweet_variables'):
+                # if it's new, add it to the list we've seen
+                store_tweet_variables(current_tweet_variables, path)
+
+    return None
+
+def store_tweet_variables(variables: list[str] ,path: str) -> None:
+    with open(f'{path}/../tweet_variables', 'a') as new_file:
+            # Checks if the tweet should be kept and if so adds it to the new file
+            new_file.write(str(variables)+'\n') 
+
+def get_tweet_variables(tweet: str) -> list[str]:
+
+    text_regex = '\"text\":\"[^\"]+\",'
+    user_name_regex = '\"name\":[^,]+,'
+    timestamp_ms_regex = '\"timestamp_ms\":.+'
+
+    current_tweet_variables: list[str] = [str(re.search(text_regex, tweet)), str(re.search(user_name_regex, tweet))]
+
+    if len(re.findall(timestamp_ms_regex, tweet)) > 0:
+        current_tweet_variables.append(str(re.findall(timestamp_ms_regex, tweet)[-1]))
+    
+    return current_tweet_variables
+
+
+#for file in file_paths_list('data cleaning/../data'):
+#    print(len(find_duplicate(file)))
+
+#find_duplicate('data cleaning/Test tweet 3.json')
+
+
+
+def clean_all_files(path: str) -> None:
     '''
-    Returns a list with all ids of all tweets to remove
-    :param path_to_data_folder: path to you personal data folder
-    :returns: a list containing the id numbers of all tweets that should be discarded
+    Cleans all data and adds it to a big file
+    :param path: path to the data folder
     '''
+    file_path_list = file_paths_list(path)
+    for file_path in file_path_list:
+        check_file(file_path)
+    # Iterates through every file
+    for file_path in file_path_list:
 
-    ids_to_remove: list = list()
-    tweet_id_regex = '\"id\":[0-9]+,'
+        lines = make_tweet_list(file_path)
 
-    tweets_list = make_tweet_list(file_path)
+        with open(f'{path}/airline_data.json', 'a') as new_file:
+            for tweet in lines:
+                # Checks if the tweet should be kept and if so adds it to the new file
+                if str(get_tweet_variables(tweet)) in make_file_iterator(f'{path}/tweet_variables'):
+                    new_file.write(remove_variables(tweet))
 
-    # Go over every tweet in that file
-    for tweet in tweets_list:
-        # Checks if the entire tweet should be discarded
-        if not check_tweet(tweet):
-            ids_to_remove.append(str(re.search(tweet_id_regex, tweet)))
+    print(f"All files cleaned and inserted into {path}/airline_data.json")
 
-    return ids_to_remove
+
+clean_all_files(f'data cleaning/../test data folder')

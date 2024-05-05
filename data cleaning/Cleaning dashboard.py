@@ -4,7 +4,7 @@ import data_cleans
 # The data folder must be at the same level (have same parent folder) as the folder this dashboard is in 
 
 # Fill in the name of your data folder here:
-data_folder_name: str = '*ENTER NAME OF DATA FOLDER HERE*'
+data_folder_name: str = 'data'
 
 # Fill in the name of the parent folder of this file
 data_cleaning_folder_name: str = 'data cleaning' # 'data cleaning' by default

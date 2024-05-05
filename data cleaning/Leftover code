@@ -24,7 +24,7 @@ for line in tweets_list:
             ids_to_remove.append(str(re.search(tweet_id_regex, line)))
 '''
 
-# Function for detecting duplicates
+# Old version of function for detecting duplicates
 '''def find_duplicate(tweet: str, path: str) -> list:
     
     #Finds duplicate tweets in a list of tweets as strings and returns there index on a list
@@ -50,3 +50,34 @@ for line in tweets_list:
                 id_duplicates.append(str(re.search(tweet_id_regex, line)))
         
     return id_duplicates'''
+
+
+'''
+def ids_to_remove(file_path: str) -> list[str]:
+    
+    #Returns a list with all ids of all tweets to remove
+    #:param path_to_data_folder: path to you personal data folder
+    #:returns: a list containing the id numbers of all tweets that should be discarded
+    
+
+    ids_to_remove: list = list()
+    tweet_id_regex = '\"id\":[0-9]+,'
+
+    tweets_list = make_tweet_list(file_path)
+
+
+    duplicate_ids = find_duplicate(file_path)
+
+
+    if len(duplicate_ids) > 0:
+        ids_to_remove.append(duplicate_ids)
+
+    # Go over every tweet in that file
+    for tweet in tweets_list:
+        
+        # Checks if the entire tweet should be discarded
+        if not check_tweet(tweet):
+            ids_to_remove.append(str(re.search(tweet_id_regex, tweet)))
+
+    return ids_to_remove
+'''
