@@ -139,9 +139,9 @@ def clean_all_files(path: str) -> None:
     '''
     tweet_id_regex = '\"id\":[0-9]+,'
     file_path_list = file_paths_list(path)
-    bad_tweets: list = ids_to_remove(path)
     for file_path in file_path_list:
-        lines = make_tweet_list(file_path)
+        bad_tweets: list = ids_to_remove(file_path)
+        lines = make_file_iterator(file_path)
         with open(f'{path}/airline_data.json', 'a') as new_file:
             for tweet in lines:
 
@@ -163,7 +163,7 @@ def file_paths_list(path_to_data_folder: str) -> list:
 
 
 
-def ids_to_remove(file_path_list: list[str]) -> list[str]:
+def ids_to_remove(file_path: str) -> list[str]:
     '''
     Returns a list with all ids of all tweets to remove
     :param path_to_data_folder: path to you personal data folder
@@ -176,25 +176,23 @@ def ids_to_remove(file_path_list: list[str]) -> list[str]:
     tweet_id_regex = '\"id\":[0-9]+,'
     timestamp_ms_regex = '\"timestamp_ms\":.+'
     #go over every file
-    for file_path in file_path_list:
+    tweets_list = make_tweet_list(file_path)
         #go over every tweet in that file
-        for tweet in make_tweet_list(file_path):
+    for tweet in tweets_list:
             #checks if tweet needs to be compared
-            if check_tweet(tweet):
-                #go over every file to compare them
-                for file_path_2 in file_path_list:
-                    #check every line
-                    for line in make_tweet_list(file_path_2):
+        if not check_tweet(tweet):
+            ids_to_remove.append(str(re.search(tweet_id_regex, tweet)))
+            '''#go over every file to compare them
+                for line in tweets_list:
 
                     # Checks if it is a different tweet
-                        if str(re.search(tweet_id_regex, tweet)) != str(re.search(tweet_id_regex, line)) and not str(re.search(tweet_id_regex, tweet)) in ids_to_remove:
+                    if str(re.search(tweet_id_regex, tweet)) != str(re.search(tweet_id_regex, line)) and not str(re.search(tweet_id_regex, tweet)) in ids_to_remove:
 
-                            # Checks whether the other tweet is a duplicate, if so add it to the duplicates list
-                            if str(re.search(text_regex, tweet)) == str(re.search(text_regex, line)) and str(re.search(user_name_regex, tweet)) == str(re.search(user_name_regex, line)) and re.findall(timestamp_ms_regex, tweet)[-1] == re.findall(timestamp_ms_regex, line)[-1]:
-                                ids_to_remove.append(str(re.search(tweet_id_regex, line)))
-            else:
-                ids_to_remove.append(str(re.search(tweet_id_regex, tweet)))
+                           # Checks whether the other tweet is a duplicate, if so add it to the duplicates list
+                        if str(re.search(text_regex, tweet)) == str(re.search(text_regex, line)) and str(re.search(user_name_regex, tweet)) == str(re.search(user_name_regex, line)) and re.findall(timestamp_ms_regex, tweet)[-1] == re.findall(timestamp_ms_regex, line)[-1]:
+                            ids_to_remove.append(str(re.search(tweet_id_regex, line)))'''
+                
 
     return ids_to_remove
 
-clean_all_files('data cleaning/../Test data')
+print(clean_all_files('data cleaning/../data'))
