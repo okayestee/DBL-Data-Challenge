@@ -26,5 +26,5 @@ for filename in os.listdir(directory):
     if filename.endswith('.json'):
         filepath = os.path.join(directory, filename)
         collection_name = os.path.splitext(filename)[0]  # Use file name as collection name
-        command = compass_command.format(filepath, collection_name, mongo_uri, database_name)
+        command = f'mongoimport --uri "{mongo_uri}" --db {database_name} --collection {collection_name} --file {filepath} --jsonArray'
         subprocess.run(command, shell=True)
