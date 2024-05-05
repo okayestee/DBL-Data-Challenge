@@ -157,8 +157,8 @@ def clean_all_files(path: str) -> None:
     :param path: path to the data folder
     '''
     file_path_list = file_paths_list(path)
-    #for file_path in file_path_list:
-    #    check_file(file_path)
+    for file_path in file_path_list:
+        check_file(file_path)
 
     tweet_variables = make_tweet_list(f'{path}/tweet_variables')
 
@@ -179,4 +179,3 @@ def clean_all_files(path: str) -> None:
     print(f"All files cleaned and inserted into {path}/airline_data.json")
 
 
-clean_all_files(f'data cleaning/../test data folder')
