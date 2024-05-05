@@ -24,16 +24,15 @@ def remove_variables(tweet: str) -> str:
 
 
 
-def read_data_file(path: str)-> str: # No longer necessary (only intended for testing purposes)
+def make_tweet_list(path: str)-> list[str]: 
     """
     Reads the data from the file located at path
     :param path: path to the data to be loaded
-    :returns: a string that contains the last line in the file
+    :returns: list with a tweets
     """
     with open(path, 'r') as file:
-        for line in file:
-            tweet = line
-        return tweet
+       lines = file.readlines()
+    return lines
 
 
 
@@ -134,61 +133,68 @@ def make_file_iterator(path: str) -> Iterator:
 #print(find_duplicate(TEST_clean_file('data cleaning/test tweet 3')[0], TEST_clean_file('data cleaning/test tweet 3')))
 
 def clean_all_files(path: str) -> None:
-    file_names_list: list = os.listdir(path)
-    
-    #open single file
+    '''
+    Cleans all data and adds it to a big file
+    :param path: path to the data folder
+    '''
+    tweet_id_regex = '\"id\":[0-9]+,'
+    file_path_list = file_paths_list(path)
+    bad_tweets: list = ids_to_remove(path)
+    for file_path in file_path_list:
+        lines = make_tweet_list(file_path)
+        with open(f'{path}/airline_data.json', 'a') as new_file:
+            for tweet in lines:
+
+                # Checks if the tweet should be kept and if so adds it to the new file
+                if str(re.search(tweet_id_regex, tweet)) in bad_tweets:
+                    new_file.write('')
+                else:
+                    new_file.write(remove_variables(tweet))
+
+
+def file_paths_list(path_to_data_folder: str) -> list:
+    file_path_list: list = list()
+    file_names_list: list = os.listdir(path_to_data_folder)
     for file_name in file_names_list:
-        file_path = f'{path}/{file_name}'
-        
-        clean_file(file_path, f'{path}/airline_data.json')
-
-    #run find duplicates on big file
-    
-
-    #remove duplicates of tweets
-
-#clean_all_files('data cleaning/../data')
+        file_path_list.append(f'{path_to_data_folder}/{file_name}')  
+    return file_path_list
 
 
 
 
 
+def ids_to_remove(file_path_list: list[str]) -> list[str]:
+    '''
+    Returns a list with all ids of all tweets to remove
+    :param path_to_data_folder: path to you personal data folder
+    '''
 
-
-
-def remove_duplicates(path: str):
 
     ids_to_remove: list = list()
-    file = make_file_iterator(path)
     text_regex = '\"text\":\"[^\"]+\",'
     user_name_regex = '\"name\":[^,]+,'
-    tweet_id_regex = '\"id\":.+,'
+    tweet_id_regex = '\"id\":[0-9]+,'
     timestamp_ms_regex = '\"timestamp_ms\":.+'
+    #go over every file
+    for file_path in file_path_list:
+        #go over every tweet in that file
+        for tweet in make_tweet_list(file_path):
+            #checks if tweet needs to be compared
+            if check_tweet(tweet):
+                #go over every file to compare them
+                for file_path_2 in file_path_list:
+                    #check every line
+                    for line in make_tweet_list(file_path_2):
 
-    for tweet in file:
-        print('I')
-        file2 = make_file_iterator(path)
-        for line in file2:
-            # Checks if it is a different tweet in the json file
-            if str(re.search(tweet_id_regex, tweet)) != str(re.search(tweet_id_regex, line)):
-                
-                print(f'{str(re.search(text_regex, tweet))} | {str(re.search(text_regex, line))}')
-                print(f'{str(re.search(user_name_regex, tweet))} | {str(re.search(user_name_regex, line))}')
-                print(f'{str(re.search(timestamp_ms_regex, tweet))} | {str(re.search(timestamp_ms_regex, line))}')
+                    # Checks if it is a different tweet
+                        if str(re.search(tweet_id_regex, tweet)) != str(re.search(tweet_id_regex, line)) and not str(re.search(tweet_id_regex, tweet)) in ids_to_remove:
 
-                # Checks whether the other tweet is a duplicate, if so add it to the duplicates list
-                if str(re.search(text_regex, tweet)) == str(re.search(text_regex, line)) and str(re.search(user_name_regex, tweet)) == str(re.search(user_name_regex, line)) and re.findall(timestamp_ms_regex, tweet)[-1] == re.findall(timestamp_ms_regex, line)[-1]:
-                    ids_to_remove.append(str(re.search(tweet_id_regex, line)))
-        
+                            # Checks whether the other tweet is a duplicate, if so add it to the duplicates list
+                            if str(re.search(text_regex, tweet)) == str(re.search(text_regex, line)) and str(re.search(user_name_regex, tweet)) == str(re.search(user_name_regex, line)) and re.findall(timestamp_ms_regex, tweet)[-1] == re.findall(timestamp_ms_regex, line)[-1]:
+                                ids_to_remove.append(str(re.search(tweet_id_regex, line)))
+            else:
+                ids_to_remove.append(str(re.search(tweet_id_regex, tweet)))
 
     return ids_to_remove
 
-print(remove_duplicates('data cleaning/test tweet 3'))
-
-
-
-
-
-
-
-
+clean_all_files('data cleaning/../Test data')
