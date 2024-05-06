@@ -102,11 +102,6 @@ def file_paths_list(path_to_data_folder: str) -> list:
 
 def check_file(path: str) -> None:
     
-    #Finds duplicate tweets in a list of tweets as strings and returns there index on a list
-    #:param tweet: the tweet you want to find duplicates of
-    #:param lines: list with all tweets
-    
-   
     
     # Initialize a list for keeping track of duplicates  
     lines = make_tweet_list(path)
@@ -157,8 +152,8 @@ def clean_all_files(path: str) -> None:
     :param path: path to the data folder
     '''
     file_path_list = file_paths_list(path)
-    for file_path in file_path_list:
-        check_file(file_path)
+    #for file_path in file_path_list:
+    #    check_file(file_path)
 
     tweet_variables = make_tweet_list(f'{path}/tweet_variables')
 
@@ -171,11 +166,9 @@ def clean_all_files(path: str) -> None:
             for tweet in lines:
                 # Checks if the tweet should be kept and if so adds it to the new file
 
-                print(str(get_tweet_variables(tweet)) + '\n' + make_tweet_list(f'{path}/tweet_variables')[0])
+                current_tweet_vars = str(get_tweet_variables(tweet)) + '\n'
 
-                if str(get_tweet_variables(tweet)) in tweet_variables: # NEVER TRUE FOR SOME REASON --- FIX THIS!!
+                if current_tweet_vars in tweet_variables:
                     new_file.write(remove_variables(tweet))
 
     print(f"All files cleaned and inserted into {path}/airline_data.json")
-
-
