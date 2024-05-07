@@ -152,23 +152,12 @@ def clean_all_files(path: str) -> None:
     :param path: path to the data folder
     '''
     file_path_list = file_paths_list(path)
-    for file_path in file_path_list:
-        check_file(file_path)
 
-    tweet_variables = make_tweet_list(f'{path}/tweet_variables')
-
-    # Iterates through every file
-    for file_path in file_path_list:
-
-        lines = make_tweet_list(file_path)
-
-        with open(f'{path}/airline_data.json', 'a') as new_file:
-            for tweet in lines:
-                # Checks if the tweet should be kept and if so adds it to the new file
-
-                current_tweet_vars = str(get_tweet_variables(tweet)) + '\n'
-
-                if current_tweet_vars in tweet_variables:
-                    new_file.write(remove_variables(tweet))
-
+    with open(f'{path}/cleaned_data.json', 'a') as new_file:
+        for file_path in file_path_list:
+            lines = make_tweet_list(file_path)
+            for line in lines:
+                if check_tweet(line):
+                    new_file.write(remove_variables(line))
     print(f"All files cleaned and inserted into {path}/airline_data.json")
+
