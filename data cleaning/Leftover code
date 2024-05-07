@@ -81,3 +81,31 @@ def ids_to_remove(file_path: str) -> list[str]:
 
     return ids_to_remove
 '''
+
+'''
+def clean_all_files(path: str) -> None:
+    '''
+    #Cleans all data and adds it to a big file
+    #:param path: path to the data folder
+'''
+    file_path_list = file_paths_list(path)
+    for file_path in file_path_list:
+        check_file(file_path)
+
+    tweet_variables = make_tweet_list(f'{path}/tweet_variables')
+
+    # Iterates through every file
+    for file_path in file_path_list:
+
+        lines = make_tweet_list(file_path)
+
+        with open(f'{path}/cleaned_data.json', 'a') as new_file:
+            for tweet in lines:
+                # Checks if the tweet should be kept and if so adds it to the new file
+
+                current_tweet_vars = str(get_tweet_variables(tweet)) + '\n'
+
+                if current_tweet_vars in tweet_variables:
+                    new_file.write(remove_variables(tweet))
+
+'''
