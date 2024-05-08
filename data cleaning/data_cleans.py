@@ -3,6 +3,7 @@ import re
 import fileinput
 from typing import Iterator
 import os
+import json
 
 
 def remove_variables(tweet: str) -> str:
@@ -158,6 +159,7 @@ def clean_all_files(path: str) -> None:
             lines = make_tweet_list(file_path)
             for line in lines:
                 if check_tweet(line):
-                    new_file.write(remove_variables(line))
-    print(f"All files cleaned and inserted into {path}/airline_data.json")
+                    #new_file.write(remove_variables(line))
+                    json.dump(remove_variables(line), new_file)
+    print(f"All files cleaned and inserted into {path}/cleaned_data.json")
 
