@@ -29,7 +29,7 @@ def make_tweet_list(path: str)-> list[dict]:
     :param path: path to the data to be loaded
     :returns: list with a tweets
     """
-    print(path)
+    print('cleaning:'+ path)
    
     data = []
     with open(path, 'r') as file:
@@ -38,7 +38,7 @@ def make_tweet_list(path: str)-> list[dict]:
                 if line[0] == '{':
                     data.append(json.loads(line))
             except json.decoder.JSONDecodeError as e:
-                print('oepsie')
+                print('Error found at: ' + line)
                 continue
         return data
     
@@ -166,8 +166,8 @@ def clean_all_files(path: str) -> None:
     counter = 0
     with open(f'{path}/cleaned_data.json', 'a') as new_file:
         for file_path in file_path_list:
-            counter =+ 1
-            print(str(counter) + '/568')
+            counter += 1
+            print(str(counter) + '/' + str(len(file_path_list)))
             lines: list = make_tweet_list(file_path)
             for line in lines:
                 if new_cleans.check_language(line) and not new_cleans.check_media(line) and not new_cleans.check_delete(line):

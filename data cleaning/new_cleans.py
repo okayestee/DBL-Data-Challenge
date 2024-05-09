@@ -31,7 +31,8 @@ def check_media(tweet: dict) -> bool:
 
     for key in tweet:
         if type(tweet[key]) == dict:
-            return check_media(tweet[key])
+            if check_media(tweet[key]):
+                return True
 
     return False
 
