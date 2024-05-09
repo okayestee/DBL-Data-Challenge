@@ -19,8 +19,27 @@ def remove_variables(tweet: dict) -> dict:
         del tweet[key]
     return tweet
 
-            
+def check_language(tweet: dict) -> bool:
+    if 'lang' in tweet:
+        return tweet['lang'] == 'en'
+    else:
+        return False
+
+def check_media(tweet: dict) -> bool:
+    if 'media' in tweet:
+        return True
+
+    for key in tweet:
+        if type(tweet[key]) == dict:
+            return check_media(tweet[key])
+
+    return False
+
+def check_delete(tweet: dict) -> bool:
+    if 'delete' in tweet:
+        return True
+    return False
     
 
 #print(read_file('data cleaning/Test tweet 4'))
-print(remove_variables(read_file('data cleaning/Test tweet 4')[0]))
+#print(remove_variables(read_file('data cleaning/Test tweet 4')[0]))

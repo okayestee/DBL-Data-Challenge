@@ -4,9 +4,9 @@ import fileinput
 from typing import Iterator
 import os
 import json
+import new_cleans
 
-
-def remove_variables(tweet: str) -> str:
+def old_remove_variables(tweet: dict) -> dict:
     '''
     Takes a tweet as a string and removes unnecessary variables
     :param tweet: string representation of tweet
@@ -17,42 +17,52 @@ def remove_variables(tweet: str) -> str:
 
     # Removes the following variables from tweet string:
     for variable in variables_to_remove:
-        regex = r'\"' + variable + r'\":[^,]+,'
-        tweet = re.sub(regex, "", tweet)
+       del tweet[variable]
 
     return tweet
 
 
 
-def make_tweet_list(path: str)-> list[str]: 
+def make_tweet_list(path: str)-> list[dict]: 
     """
     Reads the data from the file located at path
     :param path: path to the data to be loaded
     :returns: list with a tweets
     """
+    print(path)
+   
+    data = []
     with open(path, 'r') as file:
-       lines = file.readlines()
-    return lines
+        for line in file:
+            try:
+                if line[0] == '{':
+                    data.append(json.loads(line))
+            except json.decoder.JSONDecodeError as e:
+                print('oepsie')
+                continue
+        return data
+    
 
 
-
-def check_tweet(tweet: str) -> bool:
+def check_tweet(tweet: dict) -> bool:
     """
     Checks whether the tweet should be kept by looking at media and language
     :param tweet: string representation of tweet
     :returns: A boolean value representing wether we want to keep the tweet in the data
     """
-    media_regex = '\"media\":'
-    en_lang_regex = '\"lang\":\"en\",'
+    if tweet["lang"] == "en":
 
-    # Check whether the tweet has media
-    if len(re.findall(media_regex, tweet)) > 0:
-        return False
-    # Check whether the tweet is in english
-    elif len(re.findall(en_lang_regex, tweet)) > 0:
-        return True
-    else:
-        return False
+        for key in tweet:
+            if type(tweet[key]) == dict:
+                check_tweet(tweet[key])
+        # Check whether the tweet has media
+        if 'media' in tweet:
+            return False
+        # Check whether the tweet is in english
+        elif tweet["lang"] == "en":
+            return True
+        else:
+            return False
     
 
 
@@ -153,13 +163,14 @@ def clean_all_files(path: str) -> None:
     :param path: path to the data folder
     '''
     file_path_list = file_paths_list(path)
-
+    counter = 0
     with open(f'{path}/cleaned_data.json', 'a') as new_file:
         for file_path in file_path_list:
-            lines = make_tweet_list(file_path)
+            counter =+ 1
+            print(str(counter) + '/568')
+            lines: list = make_tweet_list(file_path)
             for line in lines:
-                if check_tweet(line):
+                if new_cleans.check_language(line) and not new_cleans.check_media(line) and not new_cleans.check_delete(line):
                     #new_file.write(remove_variables(line))
-                    json.dump(json.loads(remove_variables(line)), new_file)
+                    new_file.write(json.dumps(new_cleans.remove_variables(line)) + '\n')
     print(f"All files cleaned and inserted into {path}/cleaned_data.json")
-
