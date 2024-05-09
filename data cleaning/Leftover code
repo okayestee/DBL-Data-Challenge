@@ -1,3 +1,4 @@
+'''
 import re
 
 def is_retweet(line: str) -> bool:
@@ -12,7 +13,7 @@ def is_retweet(line: str) -> bool:
     return False
 
 # Code for checking duplicates
-'''
+
 #go over every file to compare them
 for line in tweets_list:
 
@@ -22,10 +23,10 @@ for line in tweets_list:
     # Checks whether the other tweet is a duplicate, if so add it to the duplicates list
         if str(re.search(text_regex, tweet)) == str(re.search(text_regex, line)) and str(re.search(user_name_regex, tweet)) == str(re.search(user_name_regex, line)) and re.findall(timestamp_ms_regex, tweet)[-1] == re.findall(timestamp_ms_regex, line)[-1]:
             ids_to_remove.append(str(re.search(tweet_id_regex, line)))
-'''
+
 
 # Old version of function for detecting duplicates
-'''def find_duplicate(tweet: str, path: str) -> list:
+def find_duplicate(tweet: str, path: str) -> list:
     
     #Finds duplicate tweets in a list of tweets as strings and returns there index on a list
     #:param tweet: the tweet you want to find duplicates of
@@ -80,14 +81,14 @@ def ids_to_remove(file_path: str) -> list[str]:
             ids_to_remove.append(str(re.search(tweet_id_regex, tweet)))
 
     return ids_to_remove
-'''
 
-'''
+    
+
 def clean_all_files(path: str) -> None:
-    '''
+    
     #Cleans all data and adds it to a big file
     #:param path: path to the data folder
-'''
+
     file_path_list = file_paths_list(path)
     for file_path in file_path_list:
         check_file(file_path)
@@ -108,4 +109,127 @@ def clean_all_files(path: str) -> None:
                 if current_tweet_vars in tweet_variables:
                     new_file.write(remove_variables(tweet))
 
+
+                    
+def old_remove_variables(tweet: dict) -> dict:
+    
+    #Takes a tweet as a string and removes unnecessary variables
+    #:param tweet: string representation of tweet
+    #:returns: a string containing the cleaned version of the tweet
+    
+
+    variables_to_remove: list[str] = ["source", "location", "url", "protected", "utc_offset", "time_zone", "geo_enabled", "contributors_enabled", "is_translator", "profile_background_color", "profile_background_image_url", "profile_background_image_url_https", "profile_background_tile", "profile_link_color", "profile_sidebar_border_color", "profile_sidebar_fill_color", "profile_text_color", "profile_use_background_image", "profile_image_url", "profile_image_url_https", "profile_banner_url", "default_profile", "default_profile_image", "following", "follow_request_sent", "notifications"]
+
+    # Removes the following variables from tweet string:
+    for variable in variables_to_remove:
+       del tweet[variable]
+
+    return tweet
+
+
+
+def check_tweet(tweet: dict) -> bool:
+    """
+    Checks whether the tweet should be kept by looking at media and language
+    :param tweet: string representation of tweet
+    :returns: A boolean value representing wether we want to keep the tweet in the data
+    """
+    if tweet["lang"] == "en":
+
+        for key in tweet:
+            if type(tweet[key]) == dict:
+                check_tweet(tweet[key])
+        # Check whether the tweet has media
+        if 'media' in tweet:
+            return False
+        # Check whether the tweet is in english
+        elif tweet["lang"] == "en":
+            return True
+        else:
+            return False
+
+
+def clean_file(old_path: str, new_path:str) -> None:
+    """
+    Replaces the json file from old_path with a cleaned version of the file at new_path
+    :param old_path: the path to the file that is to be cleaned
+    :param new_path: the path where the new cleaned file will be generated
+    """
+    # Get each individual line from the file
+    with open(old_path, 'r') as file:
+       lines = file.readlines()
+
+    # Write the cleaned version of the lines into the new file
+    with open(new_path, 'a') as new_file:
+        for number, line in enumerate(lines):
+
+            # Checks if the tweet should be kept and if so adds it to the new file
+            if check_tweet(line) == True:
+                new_file.write(remove_variables(line))
+            else:
+                new_file.write('')
+
+
+
+def get_tweet_variables(tweet: str) -> list[str]:
+
+    text_regex = '\"text\":\"[^\"]+\",'
+    user_name_regex = '\"name\":[^,]+,'
+    timestamp_ms_regex = '\"timestamp_ms\":.+'
+
+    current_tweet_variables: list[str] = [str(re.search(text_regex, tweet)), str(re.search(user_name_regex, tweet))]
+
+    if len(re.findall(timestamp_ms_regex, tweet)) > 0:
+        current_tweet_variables.append(str(re.findall(timestamp_ms_regex, tweet)[-1]))
+    
+    return current_tweet_variables
+
+
+def store_tweet_variables(variables: list[str] ,path: str) -> None:
+    with open(f'{path}/../tweet_variables', 'a') as new_file:
+            # Checks if the tweet should be kept and if so adds it to the new file
+            new_file.write(str(variables)+'\n') 
+
+
+def check_file(path: str) -> None:
+    
+    
+    # Initialize a list for keeping track of duplicates  
+    lines = make_tweet_list(path)
+    
+    with open(f'{path}/../tweet_variables', 'a') as new_file:
+            # Checks if the tweet should be kept and if so adds it to the new file
+            new_file.write('') 
+    
+    # go through all lines
+    for tweet in lines:
+
+        if check_tweet(tweet):
+            # check if we've seen a duplicate of it before
+            current_tweet_variables: list[str] = get_tweet_variables(tweet)
+
+            if current_tweet_variables[0] == 'None' or current_tweet_variables[1] == 'None' or current_tweet_variables[2] == 'None':
+                continue
+
+            if current_tweet_variables not in make_tweet_list(f'{path}/../tweet_variables'):
+                # if it's new, add it to the list we've seen
+                store_tweet_variables(current_tweet_variables, path)
+
+    return None
+
+
+
+def make_file_iterator(path: str) -> Iterator:
+    """
+    Creates and returns an iterator that contains each line of a file
+    :param path: the path to the file
+    :returns: an iterator of each line in the file found at path
+    """
+    # Get each individual line from the file
+    return fileinput.input(path)
+
+def read_file(path):
+    with open(path, 'r') as file:
+        new_file = json.load(file)
+    return new_file
 '''
