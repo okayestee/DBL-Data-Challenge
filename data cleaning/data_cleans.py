@@ -160,6 +160,6 @@ def clean_all_files(path: str) -> None:
             for line in lines:
                 if check_tweet(line):
                     #new_file.write(remove_variables(line))
-                    json.dump(remove_variables(line), new_file)
+                    json.dump(json.loads(remove_variables(line)), new_file)
     print(f"All files cleaned and inserted into {path}/cleaned_data.json")
 
