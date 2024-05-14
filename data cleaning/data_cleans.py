@@ -133,7 +133,7 @@ def clean_all_files(path: str) -> None:
             # For each line/tweet in the file, check if it should be included and write it into the cleaned data.
             lines: list = make_tweet_list(file_path)
             for line in lines:
-                if check_language(line) and not check_media(line) and not check_delete(line):
+                if check_language(line) and not check_media(line):
                     new_file.write(json.dumps(remove_variables(line)) + '\n')
 
     print(f"All files cleaned and inserted into {path}/cleaned_data.json")
