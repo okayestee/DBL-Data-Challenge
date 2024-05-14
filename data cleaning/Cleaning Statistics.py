@@ -61,26 +61,36 @@ def AirlineTweets(airline_name:str, path: str) -> int:
     count = 0
 
     with open(path, 'r') as file:
+
         for line in file:
             tweet = json.loads(line)
+
             if isAirlineInTweet(airline_name, tweet):
                 count += 1
-                if count % 10000 == 0:
-                    print(count)
-
 
     return count
 
 
 def isAirlineInTweet(airline_name: str, tweet: dict) -> bool:
-    
+    """
+    Checks whether an airline has been mentioned somewhere in a tweet.
+    :param airline_name: the name of the airline we want to find a mention of
+    :param tweet: a dictionary representation of the tweet we want to check
+    :returns: a boolean value representing whether we have found a mention of the airline or not
+    """
+    # Check if the tweet has entities data
     if 'entities' in tweet:
+
+        # Iterate through all of the mentions
         if 'user_mentions' in tweet['entities']:
             for mention_index in range(0, len(tweet['entities']['user_mentions'])):
+
+                # Check whether the screen name of the mention is equal to the name of the desired airline
                 if 'screen_name' in tweet['entities']['user_mentions'][mention_index]:
-                    if tweet['entities']['user_mentions'][mention_index]['screen_name'] == 'AmericanAir':
+                    if tweet['entities']['user_mentions'][mention_index]['screen_name'] == airline_name:
                         return True
 
+    # Recurse through every tweet inside the original tweet
     for key in tweet:
         if type(tweet[key]) == dict:
             if isAirlineInTweet(airline_name,tweet[key]):
