@@ -1,4 +1,5 @@
 import data_cleans as dc
+import json
 
 def languages(folder_path: str) -> dict:
     """
@@ -47,4 +48,42 @@ def media(folder_path: str) -> tuple:
                 
     return (total_count, media_count)
 
-print(media('data cleaning/../data'))
+
+
+def AirlineTweets(airline_name:str, path: str) -> int:
+    """
+    Counts the amount of tweets containing mentions of a chosen airline.
+    :param airline_name: name of the chosen airline.
+    :path: path to the file containing the tweets
+    :returns: the number of tweets mentioning the airline.
+    """
+
+    count = 0
+
+    with open(path, 'r') as file:
+        for line in file:
+            tweet = json.loads(line)
+            if isAirlineInTweet(airline_name, tweet):
+                count += 1
+                if count % 10000 == 0:
+                    print(count)
+
+
+    return count
+
+
+def isAirlineInTweet(airline_name: str, tweet: dict) -> bool:
+    
+    if 'entities' in tweet:
+        if 'user_mentions' in tweet['entities']:
+            for mention_index in range(0, len(tweet['entities']['user_mentions'])):
+                if 'screen_name' in tweet['entities']['user_mentions'][mention_index]:
+                    if tweet['entities']['user_mentions'][mention_index]['screen_name'] == 'AmericanAir':
+                        return True
+
+    for key in tweet:
+        if type(tweet[key]) == dict:
+            if isAirlineInTweet(airline_name,tweet[key]):
+                return True
+    
+    return False
