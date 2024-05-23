@@ -4,7 +4,7 @@ def connect_to_db():
     # Connect to the MongoDB server (modify the URI as needed)
     client = MongoClient('mongodb://localhost:27017/')
     # Select the database
-    db = client['AirplaneMode']
+    db = client['DBL2']
     # Select the collection
     collection = db['removed_duplicates']
     return db, collection
@@ -50,18 +50,38 @@ def store_data_in_new_collection(db, data):
     # Insert the documents into the new collection
     new_collection.insert_many(documents)
 
+
+
+def compound_index(collection):
+    '''
+    Create a compound index on in_reply_to_status_id_str and id_str fields
+    '''
+    collection.create_index([('in_reply_to_status_id_str', ASCENDING), ('id_str', ASCENDING)])
+    
+
+def count_reply(collection):
+    pass
+
+"""
+only wanted to run the compound index and collection functions
+
 def main():
     db, collection = connect_to_db()
     create_index_on_id_str(collection)
+    compound_index(collection)
     id_str_dict = create_id_str_dict(collection)
     store_data_in_new_collection(db, id_str_dict)
+
     print("Data stored in new collection 'id_str_count'.")
+"""
+
+def main():
+    db, collection = connect_to_db()
+    compound_index(collection)
+    
 
 if __name__ == "__main__":
     main()
-
-
-
 
 
 
