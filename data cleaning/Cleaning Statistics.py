@@ -49,7 +49,6 @@ def media(folder_path: str) -> tuple:
     return (total_count, media_count)
 
 
-
 def AirlineTweets(airline_name:str, path: str) -> int:
     """
     Counts the amount of tweets containing mentions of a chosen airline.
