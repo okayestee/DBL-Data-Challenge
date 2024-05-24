@@ -9,10 +9,11 @@ def connect_to_db():
     collection = db['removed_duplicates']
     return db, collection
 
-def create_index_on_id_str(collection):
-    # Create an index on the 'id_str' field
-    index_name = collection.create_index([('id_str', ASCENDING)], unique=True)
-    return index_name
+def create_indexes(collection):
+    # Create an index on the 'id_str' field & 'in_reply_to_status_id_str'
+    #index_name_id = collection.create_index([('id_str', ASCENDING)])
+    index_name_status = collection.create_index([('in_reply_to_status_id_str', ASCENDING)])
+    return index_name_status
 
 def create_id_str_dict(collection):
     # Initialize an empty dictionary
@@ -55,11 +56,13 @@ def store_data_in_new_collection(db, data):
 def compound_index(collection):
     '''
     Create a compound index on in_reply_to_status_id_str and id_str fields
+    #not necessary
     '''
     collection.create_index([('in_reply_to_status_id_str', ASCENDING), ('id_str', ASCENDING)])
     
 
 def count_reply(collection):
+    #fetch all unique IDs
     pass
 
 """
@@ -67,7 +70,7 @@ only wanted to run the compound index and collection functions
 
 def main():
     db, collection = connect_to_db()
-    create_index_on_id_str(collection)
+    create_indexes(collection)
     compound_index(collection)
     id_str_dict = create_id_str_dict(collection)
     store_data_in_new_collection(db, id_str_dict)
@@ -77,7 +80,7 @@ def main():
 
 def main():
     db, collection = connect_to_db()
-    compound_index(collection)
+    create_indexes(collection)
     
 
 if __name__ == "__main__":
