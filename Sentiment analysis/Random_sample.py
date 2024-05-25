@@ -31,10 +31,10 @@ def select_line(file_path, line_number) -> dict:
         else:
             return dict() 
 
-def save_selected_lines(selected_lines: list[dict]):
-    tweet_entries: list[dict] = []
+def get_text_from_tweets(tweets: list[dict]) -> list[str]:
+    tweet_entries: list[str] = []
 
-    for line in selected_lines:
+    for line in tweets:
         if line['truncated'] == True:
             extended_tweet: dict = line["extended_tweet"]
             tweet_entries.append(extended_tweet['full_text'])
@@ -52,6 +52,12 @@ def count_lines(file_path: str):
         number_of_lines: int = sum(1 for _ in file)
         return number_of_lines
 
+def save_sample(sample, file_name) -> None:
+    with open(file_name, 'a') as new_file:
+        for content in get_text_from_tweets(sample):
+            new_file.write(content)
 
-sample = select_random_lines(5, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
-print(save_selected_lines(sample))
+sample = select_random_lines(100, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
+save_sample(sample, 'sample.json')
+
+
