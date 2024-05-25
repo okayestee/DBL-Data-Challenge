@@ -18,7 +18,6 @@ from wordcloud import WordCloud
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
-# !pip install squarify
 import squarify
 import spacy
 from tqdm import tqdm
