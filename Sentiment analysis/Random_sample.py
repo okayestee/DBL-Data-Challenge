@@ -55,9 +55,9 @@ def count_lines(file_path: str):
 def save_sample(sample, file_name) -> None:
     with open(file_name, 'a') as new_file:
         for content in get_text_from_tweets(sample):
-            new_file.write(content)
+            new_file.write(str(content))
 
-sample = select_random_lines(100, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
-save_sample(sample, 'sample.json')
+sample = select_random_lines(10, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
+save_sample(sample, 'Sentiment analysis/sample.json')
 
 
