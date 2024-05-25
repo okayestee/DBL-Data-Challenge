@@ -35,7 +35,7 @@ def get_text_from_tweets(tweets: list[dict]) -> list[str]:
     tweet_entries: list[str] = []
 
     for line in tweets:
-        if line['truncated'] == True:
+        if 'extended_tweet' in line:
             extended_tweet: dict = line["extended_tweet"]
             tweet_entries.append(extended_tweet['full_text'])
         else:
@@ -54,10 +54,12 @@ def count_lines(file_path: str):
 
 def save_sample(sample, file_name) -> None:
     with open(file_name, 'a', encoding='utf-8') as new_file:
+        counter: int = 0
         for content in get_text_from_tweets(sample):
-            new_file.write(str(content)+ '\n')
+            counter += 1
+            new_file.write(f'Tweet {counter}: {str(content)} \n')
 
-sample = select_random_lines(100, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
-save_sample(sample, 'Sentiment analysis/sample.json')
+sample = select_random_lines(5, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
+save_sample(sample, 'Sentiment analysis/sample')
 
 
