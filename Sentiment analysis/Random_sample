@@ -4,7 +4,9 @@ import random
 # Step 1: Load the JSON data
 def load_json(file_path):
     with open(file_path, 'r') as file:
-        data = json.load(file)
+        data: list[dict] = list()
+        for line in file:
+            data.append(json.loads(line))
     return data
 
 # Step 2: Select random lines
@@ -22,6 +24,6 @@ def save_selected_lines(selected_lines: list[dict]):
         tweet_entries.append(line["text"])
     return tweet_entries
 
-data = load_json("Sentiment analysis/../data/cleaned_data.json")
+data = load_json("Sentiment analysis/../data/airlines-1584571615369.json")
 sample = select_random_lines(data, 5)
 print(save_selected_lines(sample))
