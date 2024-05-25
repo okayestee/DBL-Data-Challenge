@@ -22,6 +22,6 @@ def save_selected_lines(selected_lines: list[dict]):
         tweet_entries.append(line["text"])
     return tweet_entries
 
-data = load_json("Sentiment analysis/../data/cleaned_data")
+data = load_json("Sentiment analysis/../data/cleaned_data.json")
 sample = select_random_lines(data, 5)
 print(save_selected_lines(sample))
