@@ -13,8 +13,9 @@ airline_ids = ['56377143', '106062176', '18332190', '22536055', '124476322',
 
 def extract_airline_start(removed_dupl, airline_ids):
     # Ensure indexes are created
-    removed_dupl.create_index([('id_str_1', 1)])
-    removed_dupl.create_index([('in_status_reply_to_id_str_1', 1)])
+    #removed_dupl.create_index([('id_str_1', 1)])
+    #removed_dupl.create_index([('in_status_reply_to_id_str_1', 1)])
+    removed_dupl.create_index([('user.id_str', 1)])
  #user_id
     # Define the new collection
     airline_convo_starters = db['airline_convo_starters']
