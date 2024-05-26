@@ -15,15 +15,18 @@ def extract_airline_start(removed_dupl, airline_ids):
     # Ensure indexes are created
     #removed_dupl.create_index([('id_str_1', 1)])
     #removed_dupl.create_index([('in_status_reply_to_id_str_1', 1)])
-    removed_dupl.create_index([('user.id_str', 1)])
+    #removed_dupl.create_index([('user.id_str', 1)])
+    # Ensure uniqueness of user emails
+    #removed_dupl.create_index([('user.id_str', 1)])
+
  #user_id
     # Define the new collection
     airline_convo_starters = db['airline_convo_starters']
 
     # Query to find documents that match an airline id and the null value
     query = {
-        'id_str_1': {'$in': airline_ids},
-        'in_status_reply_to_id_str_1': None
+        #'user.id_str_1': {'$in': airline_ids},
+        'in_status_reply_to_id_str_1_1': None
     }
 
     # Use the explain method to verify index usage
