@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 import pprint
-
+import treelib
+#only does the first 1000 documents
 # Establish a connection to the MongoDB server
 client = MongoClient('mongodb://localhost:27017/')
 
