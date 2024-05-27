@@ -4,8 +4,8 @@ from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017/')
 
 # Select the AirplaneMode database and the Collection_no_single_tweets collection
-db = client.AirplaneMode
-collection = db.Collection_no_single_tweets
+db = client.DBL2
+collection = db.removed_duplicates
 
 # Create a new collection for storing the inconsistent documents
 new_collection = db.Inconsistent_Tweets
@@ -17,8 +17,8 @@ collection.create_index('in_reply_to_user_id_str')
 
 # Define the query to find documents where in_status_reply_to_id_str is null but in_reply_to_user_id_str is not null
 query = {
-    'in_status_reply_to_id_str': None,
-    'in_reply_to_user_id_str': {'$ne': None}
+    'in_status_reply_to_id_str': {'$ne': [None, 'null']},
+    'in_reply_to_user_id_str': {'$ne': [None, 'null']}
 }
 
 # Find the documents matching the query
