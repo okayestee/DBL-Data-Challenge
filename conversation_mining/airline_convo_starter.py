@@ -21,7 +21,7 @@ def extract_airline_start(removed_dupl, airline_ids):
     
     # Create non-unique indexes
     removed_dupl.create_index('user.id_str')
-    removed_dupl.create_index('in_reply_to_status_id_str')
+    removed_dupl.create_index('in_reply_to_user_id_str')
 
     # Define the new collection
     airline_convo_starters = db['airline_convo_starters']
