@@ -5,12 +5,14 @@ client = MongoClient('mongodb://localhost:27017/')
 
 # Select the AirplaneMode database and the id_str_in_reply_to_status_id_str collection
 db = client.AirplaneMode
-collection = db.id_str_in_reply_to_status_id_str
+collection = db.needed_fields
 
-# Query to find documents with counted_reply 0 and in_reply_to_status_id_str null
+# Query to find documents not meeting both conditions
 query = {
-    "counted_reply": 0,
-    "in_reply_to_status_id_str": None
+    "$or": [
+        {"counted_reply": {"$ne": 0}},
+        {"in_reply_to_status_id_str": {"$ne": None}}
+    ]
 }
 
 # Find all documents matching the query

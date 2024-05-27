@@ -12,7 +12,7 @@ collection = db.Collection_no_single_tweets
 collection.create_indexes([IndexModel([('id_str', ASCENDING)]), IndexModel([('in_reply_to_status_id_str', ASCENDING)])])
 
 # Define the maximum number of documents to process
-max_documents = 1664672
+max_documents = 1664672  # Adjust this number as needed
 
 # Initialize a dictionary to hold the tweet relationships
 tweet_dict = {}
@@ -23,7 +23,7 @@ processed_count = 0
 
 # Process tweets in batches
 while processed_count < max_documents:
-    cursor = collection.find({}, {'id_str': 1, 'in_reply_to_status_id_str': 1}).skip(processed_count).limit(batch_size)
+    cursor = collection.find({}, {'id_str': 1, 'user_id_str': 1, 'in_reply_to_status_id_str': 1, 'counted_reply': 1}).skip(processed_count).limit(batch_size)
     batch = list(cursor)
     
     if not batch:
@@ -52,14 +52,20 @@ def add_node(tweet_id, tree):
     parent_id = tweet.get('in_reply_to_status_id_str')
 
     # Create a new node for the current tweet
-    node = {"id_str": tweet_id, "children": []}
+    node = {
+        "id_str": tweet['id_str'],
+        "user_id_str": tweet['user_id_str'],
+        "in_reply_to_status_id_str": tweet['in_reply_to_status_id_str'],
+        "counted_reply": tweet['counted_reply'],
+        "children": []
+    }
     
-    # If this tweet is a reply to another tweet
-    if parent_id and parent_id in tweet_dict:
+    # If this tweet is a reply to another tweet and counted_reply is not 0
+    if parent_id and parent_id in tweet_dict and tweet['counted_reply'] != 0:
         parent_node = add_node(parent_id, tree)
         parent_node["children"].append(node)
     else:
-        # This is a root tweet
+        # This is a root tweet or a leaf node with counted_reply == 0
         tree[tweet_id] = node
 
     return node
