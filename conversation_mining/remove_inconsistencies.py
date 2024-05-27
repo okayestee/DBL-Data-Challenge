@@ -5,7 +5,7 @@ client = MongoClient('mongodb://localhost:27017/')
 
 # Select the AirplaneMode database and the Collection_no_single_tweets collection
 db = client.AirplaneMode
-collection = db.Collection_no_single_tweets
+collection = db.removed_duplicates
 
 # Create a new collection for storing the inconsistent documents
 new_collection = db.Inconsistent_Tweets
