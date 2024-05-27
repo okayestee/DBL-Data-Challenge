@@ -4,8 +4,8 @@ from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017/')
 
 # Select the AirplaneMode database and the id_str_in_reply_to_status_id_str collection
-db = client.AirplaneMode
-collection = db.needed_fields
+db = client['AirplaneMode']
+collection = db['needed_fields']
 
 # Dictionary to keep track of reply counts
 reply_counts = {}

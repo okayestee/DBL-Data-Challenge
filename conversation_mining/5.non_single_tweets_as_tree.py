@@ -5,8 +5,8 @@ from treelib import Tree
 client = MongoClient('mongodb://localhost:27017/')
 
 # Select the AirplaneMode database and the Collection_no_single_tweets collection
-db = client.AirplaneMode
-collection = db.Collection_no_single_tweets
+db = client['AirplaneMode']
+collection = db['Collection_no_single_tweets']
 
 # Ensure indexes are created
 collection.create_indexes([IndexModel([('id_str', ASCENDING)]), IndexModel([('in_reply_to_status_id_str', ASCENDING)])])
@@ -75,7 +75,7 @@ for tweet_id in tweet_dict:
     add_node(tweet_id, trees)
 
 # Prepare a new collection for storing trees
-trees_collection = db.Tweet_Trees
+trees_collection = db['Tweet_Trees']
 trees_collection.drop()  # Drop the collection if it exists to start fresh
 
 # Store each tree in the new collection
