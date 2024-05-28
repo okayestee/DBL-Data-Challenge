@@ -1,0 +1,74 @@
+from pymongo import MongoClient, ASCENDING
+
+
+
+
+
+# def connect_to_db():
+#     # Connect to the MongoDB server
+#     client = MongoClient('mongodb://localhost:27017/')
+#     # Select the database
+#     db = client['DBL']
+#     # Select the collections
+#     removed_duplicates_collection = db['removed_duplicates']
+#     return db, removed_duplicates_collection
+
+# def create_indexes(collection):
+#     # Create indexes to speed up the queries
+#     collection.create_index([("user.id_str", ASCENDING)])
+#     collection.create_index([("in_reply_to_status_id_str", ASCENDING)])
+
+# def find_tweets_with_replies(removed_duplicates_collection):
+#     # List of user IDs to exclude
+#     excluded_user_ids = [
+#         '56377143', '106062176', '18332190', '22536055', '124476322', '26223583',
+#         '2182373406', '38676903', '1542862735', '253340062', '218730857', '45621423', '20626359'
+#     ]
+    
+#     # Pipeline to find tweets that start a conversation
+#     pipeline = [
+#         # Match tweets that are not from excluded user IDs and are not replies themselves
+#         {"$match": {"user.id_str": {"$nin": excluded_user_ids}, "in_reply_to_status_id_str": None}}
+#     ]
+    
+#     results = list(removed_duplicates_collection.aggregate(pipeline))
+#     return results
+
+# def store_tweets_in_new_collection(db, tweets):
+#     # Create or get the 'user_starts_conversation' collection
+#     new_collection = db['user_starts_conversation']
+#     # Insert the tweets into the new collection
+#     if tweets:  # Check if there are any tweets to insert
+#         new_collection.insert_many(tweets)
+
+# def main():
+#     db, removed_duplicates_collection = connect_to_db()
+#     create_indexes(removed_duplicates_collection)
+#     tweets_with_replies = find_tweets_with_replies(removed_duplicates_collection)
+#     store_tweets_in_new_collection(db, tweets_with_replies)
+#     print("Tweets stored in new collection 'user_starts_conversation' successfully.")
+
+# if __name__ == "__main__":
+#     main()
+
+
+def connect_to_db():
+    # Connect to the MongoDB server
+    client = MongoClient('mongodb://localhost:27017/')
+    # Select the database
+    db = client['DBL']
+    # Select the collection
+    user_starts_conversation_collection = db['user_starts_conversation']
+    return user_starts_conversation_collection
+
+def delete_non_conversation_starters(user_starts_conversation_collection):
+    # Delete documents where in_reply_to_user_id_str is not null
+    result = user_starts_conversation_collection.delete_many({"in_reply_to_user_id_str": {"$ne": None}})
+    print(f"Deleted {result.deleted_count} documents where in_reply_to_user_id_str is not null.")
+
+def main():
+    user_starts_conversation_collection = connect_to_db()
+    delete_non_conversation_starters(user_starts_conversation_collection)
+
+if __name__ == "__main__":
+    main()

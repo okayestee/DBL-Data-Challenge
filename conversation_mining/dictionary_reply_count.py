@@ -100,7 +100,7 @@ from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017/')
 
 # Select the AirplaneMode database and the id_str_in_reply_to_status_id_str collection
-db = client.AirplaneMode
+db = client.DBL
 collection = db.id_str_in_reply_to_status_id_str
 
 # Query to find documents not meeting both conditions
