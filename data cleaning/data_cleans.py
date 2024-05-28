@@ -11,7 +11,7 @@ def make_tweet_list(path: str)-> list[dict]:
     print('cleaning:'+ path)
    
     data = []
-    with open(path, 'r') as file:
+    with open(path, 'r', encoding='latin-1') as file:
         for line in file:
             try:
                 if line[0] == '{':
@@ -104,7 +104,7 @@ def clean_all_files(path: str) -> None:
     file_path_list = file_paths_list(path)
     progress_counter = 0
 
-    with open(f'{path}/cleaned_data.json', 'a') as new_file:
+    with open(f'{path}/cleaned_data.json', 'a', encoding='latin-1') as new_file:
         for file_path in file_path_list:
             # Keep track of how many files have been processed
             progress_counter += 1
