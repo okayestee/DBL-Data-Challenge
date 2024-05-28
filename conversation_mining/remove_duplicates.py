@@ -2,8 +2,8 @@
 from pymongo import MongoClient
 
 client = MongoClient('mongodb://localhost:27017/')
-db = client['DBL2'] #your database
-tweets_collection = db['clean_finalversion'] #your collection within database
+db = client['AirplaneMode'] #your database
+tweets_collection = db['Cleaned_data_complete'] #your collection within database
 
 removed_dupl = db['removed_duplicates']  # Collection where duplicates are removed
 # Identify duplicates pipeline
