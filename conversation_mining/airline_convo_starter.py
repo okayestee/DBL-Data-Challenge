@@ -6,10 +6,10 @@ import treelib
 client = MongoClient('mongodb://localhost:27017/')
 
 # Access the database
-db = client['DBL2']
+db = client['AirplaneMode']
 
 # Access the collection where duplicates are removed
-removed_dupl = db['removed_duplicates']
+removed_dupl = db['no_inconsistency']
 
 # List of airline IDs as strings (assuming IDs are strings, change to integers if needed)
 airline_ids = ['56377143', '106062176', '18332190', '22536055', '124476322', 
@@ -48,7 +48,7 @@ def extract_airline_start(removed_dupl, airline_ids):
     pprint.pprint(execution_plan)
 
     # Find matching documents, limited to the first 1000 results
-    matching_docs = list(removed_dupl.find(query).limit(1000))
+    matching_docs = list(removed_dupl.find(query).limit(2781122))
 
     # Debug: Print the number of matching documents found
     print(f"Number of matching documents found: {len(matching_docs)}")
