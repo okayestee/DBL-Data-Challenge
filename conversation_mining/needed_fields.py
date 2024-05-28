@@ -3,7 +3,7 @@ from pymongo import MongoClient, IndexModel, ASCENDING
 def connect_to_db():
     client = MongoClient('mongodb://localhost:27017/')
     db = client['AirplaneMode']
-    collection = db['removed_duplicates']
+    collection = db['no_inconsistency']
     
     # Create indexes
     collection.create_indexes([
