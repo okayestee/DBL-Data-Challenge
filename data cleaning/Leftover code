@@ -233,3 +233,23 @@ def read_file(path):
         new_file = json.load(file)
     return new_file
 '''
+
+'''
+def check_media(tweet: dict) -> bool:
+    """
+    #Checks whether a tweet or any tweets that are inside the tweet contain any media elements
+    #:param tweet: the tweet to be checked
+    #:returns: a boolean value representing whether the tweet has any media content
+    """
+    # Check the main tweet
+    if 'media' in tweet:
+        return True
+
+    # Check all tweets inside the tweet
+    for key in tweet:
+        if type(tweet[key]) == dict:
+            if check_media(tweet[key]):
+                return True
+
+    return False
+'''

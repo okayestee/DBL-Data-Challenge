@@ -4,7 +4,7 @@ from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017/')
 
 # Select the AirplaneMode database and the Collection_no_single_tweets collection
-db = client.AirplaneMode
+db = client.DBL
 collection = db.removed_duplicates
 
 # Replace 'your_collection' with your actual collection name
@@ -45,12 +45,8 @@ print(f"Moved {len(documents_to_move)} documents to the new collection.")
 
 
 
-
-
 #If the above code does not work, make a comment of it and try this one below:
-#First uncomment this code with selecting it and pressing ctrl + /
-
-
+#Command for commenting and uncommenting the selected code is: ctrl + /
 
 
 
