@@ -59,7 +59,7 @@ def save_sample(sample, file_name) -> None:
             counter += 1
             new_file.write(f'Tweet {counter}: {str(content)} \n')
 
-sample = select_random_lines(5, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
+sample = select_random_lines(500, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
 save_sample(sample, 'Sentiment analysis/sample')
 
 
