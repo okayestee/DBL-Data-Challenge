@@ -1,15 +1,14 @@
 from pymongo import MongoClient, ASCENDING
-from tqdm import tqdm
 
 # Function to connect to the MongoDB server and select collections
 def connect_to_db():
     # Connect to the MongoDB server
     client = MongoClient('mongodb://localhost:27017/')
     # Select the database
-    db = client['AirplaneMode']
+    db = client['DBL']
     # Select the collections
-    removed_duplicates_collection = db['no_inconsistency']
-    return db, removed_duplicates_collection
+    no_inconsistency = db['no_inconsistency']
+    return db, no_inconsistency
 
 # Function to create indexes on relevant fields
 def create_indexes(collection):
@@ -17,11 +16,12 @@ def create_indexes(collection):
     collection.create_index([("user.id_str", ASCENDING)])
     collection.create_index([("in_reply_to_status_id_str", ASCENDING)])
 
-# Function to find replies in batches
+
+
 def find_replies_in_batches(collection, batch_size):
     # Query to match tweets that are replies
     query = {
-        "in_reply_to_status_id_str": {"$ne": None}
+        "in_reply_to_user_id_str": {"$ne": None}  # Update to filter out documents where in_reply_to_user_id_str is not null
     }
     
     # Fetch tweets in batches
@@ -39,6 +39,7 @@ def find_replies_in_batches(collection, batch_size):
     
     return tweets
 
+
 # Function to store tweets in a new collection
 def store_tweets_in_new_collection(db, tweets):
     # Create or get the 'replies' collection
@@ -53,13 +54,11 @@ def store_tweets_in_new_collection(db, tweets):
 
 def main():
     # Connect to the database and select the collection
-    db, removed_duplicates_collection = connect_to_db()
+    db, no_inconsistency_collection = connect_to_db()
     # Create indexes on relevant fields
-    create_indexes(removed_duplicates_collection)
+    create_indexes(no_inconsistency_collection)
     # Find replies in batches
-    replies = find_replies_in_batches(removed_duplicates_collection, batch_size=10000)
+    replies = find_replies_in_batches(no_inconsistency_collection, batch_size=10000)
     # Store tweets in a new collection
     store_tweets_in_new_collection(db, replies)
-
-if __name__ == "__main__":
-    main()
+   
