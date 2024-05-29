@@ -57,7 +57,7 @@ import os
 
 def connect_to_db():
     client = MongoClient('mongodb://localhost:27017/')
-    db = client['AirplaneMode']
+    db = client['DBL2']
     return db
 
 def create_indexes(collection):
