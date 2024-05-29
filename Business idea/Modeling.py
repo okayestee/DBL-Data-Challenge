@@ -10,31 +10,27 @@ db = client.Airline_data
 collection = db.removed_duplicates
 
 #Batch_size to reduce memory usage
-batch_size = 4000
+batch_size = 5000
 
-def process_batch(batch):
-    tweets = [tweet['text'] for tweet in batch]
-    tweets = [clean(tweet) for tweet in tweets]
-    return tweets
+def batch_generator(collection, batch_size):
+    total_tweets = collection.count_documents({})
+    for i in range(0, total_tweets, batch_size):
+        tweets_cursor = collection.find({}, {'_id': 0, 'tweet_text': 1}).skip(i).limit(batch_size)
+        batch = list(tweets_cursor)
+        yield [clean(tweet['tweet_text']) for tweet in batch]
+        del batch
+        gc.collect()
 
 
-#already processed tweets
-all_tweets = []
+# Initialize BERTopic model
+topic_model = BERTopic()
 
-total_tweets = collection.count_documents({})
-for i in range(0,total_tweets, batch_size):
-    tweets_cursor = collection.find({},{'_id': 0, 'text':1}).skip(i).limit(batch_size)
-    batch = list(tweets_cursor)
-    processed_batch = process_batch(batch)
-    all_tweets.extend(processed_batch)
-    #to free up memory
-    del batch
-    del processed_batch
+# Fit the model in batches
+for batch in batch_generator(collection, batch_size):
+    topic_model.partial_fit(batch)
     gc.collect()
 
-#Topic Modeling with BERTopic
-topic_model = BERTopic()
-topics, probs = topic_model.fit_transform(all_tweets)
-
+#Save model to a file
+topic_model.save("bertopic_model")
 # Display the topics
 print(topic_model.get_topic_info())
