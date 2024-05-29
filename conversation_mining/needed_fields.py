@@ -1,8 +1,10 @@
 from pymongo import MongoClient, IndexModel, ASCENDING
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
+import os
 def connect_to_db():
     client = MongoClient('mongodb://localhost:27017/')
-    db = client['AirplaneMode']
+    db = client['DBL2']
     collection = db['no_inconsistency']
     
     # Create indexes

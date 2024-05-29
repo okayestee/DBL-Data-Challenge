@@ -5,7 +5,7 @@ import pprint
 client = MongoClient('mongodb://localhost:27017/')
 
 # Access the database
-db = client['DBL2']
+db = client.DBL2
 
 # Access the collection where duplicates are removed
 no_inconsistency = db['no_inconsistency']

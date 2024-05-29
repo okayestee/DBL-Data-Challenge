@@ -1,8 +1,12 @@
 from pymongo import MongoClient
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
+import os
 #Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
-db = client['DBL2'] #your database
-tweets_collection = db['clean_finalversion'] #your collection within database
+db = client.DBL2 #your database
+tweets_collection = db['cleaned_data'] #your collection within database
 
 removed_dupl = db['removed_duplicates']  # Collection where duplicates are removed
 tweets_collection.create_index('user.id_str')
