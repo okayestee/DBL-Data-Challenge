@@ -53,7 +53,6 @@
 from pymongo import MongoClient, IndexModel, ASCENDING, errors
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
-import os
 
 def connect_to_db():
     client = MongoClient('mongodb://localhost:27017/')
@@ -115,8 +114,7 @@ def filter_and_store_consistent_data(db, max_documents, num_workers):
 
 def main():
     max_documents = 4413045
-    num_cores = 20
-    num_workers = min(max(1, num_cores * 2), 32)  # Number of threads capped at 32 or 2x the number of CPU cores
+    num_workers = 4 # Number of threads capped at 32 or 2x the number of CPU cores
 
     db = connect_to_db()
     filter_and_store_consistent_data(db, max_documents, num_workers)
