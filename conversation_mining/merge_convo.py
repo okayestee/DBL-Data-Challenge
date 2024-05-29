@@ -5,7 +5,12 @@ from treelib import Tree, Node
 client = MongoClient('mongodb://localhost:27017/')
 db = client['AirplaneMode']
 user_trees_collection = db['user_trees']
+'''
+Tree Deserialization and Serialization: Converts trees to and from a dictionary format, enabling easy manipulation.
+Merge Consecutive Replies: Efficiently merges consecutive replies by a single user within each tree, ensuring that only the text fields are combined while retaining the original fields of the first reply.
+Main Execution: Deserializes trees from the database, processes them to merge replies, and then serializes and stores the updated trees back in the database.
 
+'''
 # Function to deserialize a tree from a dictionary
 def deserialize_tree(tree_dict):
     tree = Tree()
