@@ -4,12 +4,12 @@ from tqdm import tqdm
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
-db = client.AirplaneMode
+db = client.DBL2
 
 # Collections
 replies_collection = db.replies
-convo_starters_collection = db.airline_convo_starters
-trees_collection = db.airline_trees
+convo_starters_collection = db.user_roots
+trees_collection = db.user_trees
 
 # Ensure indexes are created
 convo_starters_collection.create_indexes([IndexModel([('id_str', ASCENDING)])])
