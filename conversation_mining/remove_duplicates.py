@@ -1,6 +1,5 @@
-#setup mongoDB connection
 from pymongo import MongoClient
-
+#Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['DBL2'] #your database
 tweets_collection = db['clean_finalversion'] #your collection within database
@@ -20,16 +19,15 @@ pipeline = [
 
 duplicates = list(tweets_collection.aggregate(pipeline))
 
-# Remove duplicates, keeping only one of each
+# Process duplicates
 for duplicate in duplicates:
     unique_ids = duplicate['uniqueIds']
-    keep_id = unique_ids.pop(0)  # Keep the first occurrence
+    keep_id = unique_ids.pop(0)
     
-    # Insert the document to keep into the new collection
     document_to_keep = tweets_collection.find_one({"_id": keep_id})
     removed_dupl.insert_one(document_to_keep)
 
-# Insert documents that were not part of duplicates
+# Identify non-duplicates pipeline
 non_duplicates_pipeline = [
     {"$group": {
         "_id": "$id_str",
@@ -43,10 +41,12 @@ non_duplicates_pipeline = [
 
 non_duplicates = list(tweets_collection.aggregate(non_duplicates_pipeline))
 
+# Process non-duplicates
 for non_duplicate in non_duplicates:
     doc_id = non_duplicate['uniqueIds'][0]
     document_to_keep = tweets_collection.find_one({"_id": doc_id})
     removed_dupl.insert_one(document_to_keep)
+
 
 
 #test

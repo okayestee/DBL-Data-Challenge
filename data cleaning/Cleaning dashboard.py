@@ -4,10 +4,10 @@ import data_cleans
 # The data folder must be at the same level (have same parent folder) as the folder this dashboard is in 
 
 # Fill in the name of your data folder here:
-data_folder_name: str = 'data'
+data_folder_name: str = 'data airlines'
 
 # Fill in the name of the parent folder of this file
-data_cleaning_folder_name: str = 'data cleaning' # 'data cleaning' by default
+data_cleaning_folder_name: str = 'data airlines' # 'data cleaning' by default
 
 # Once folder_name contains the correct name
 # Run this file (Will take a while)
