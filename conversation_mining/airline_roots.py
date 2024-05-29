@@ -1,22 +1,26 @@
 from pymongo import MongoClient
 import pprint
-import treelib
-#only does the first 1000 documents
+
 # Establish a connection to the MongoDB server
 client = MongoClient('mongodb://localhost:27017/')
 
 # Access the database
-db = client['AirplaneMode']
+db = client['DBL2']
 
 # Access the collection where duplicates are removed
-removed_dupl = db['no_inconsistency']
+no_inconsistency = db['no_inconsistency']
 
-# List of airline IDs as strings (assuming IDs are strings, change to integers if needed)
-airline_ids = ['56377143', '106062176', '18332190', '22536055', '124476322', 
-               '26223583', '2182373406', '38676903', '1542862735', '253340062', 
-               '45621423', '20626359', '218730857']
+# List of airline IDs as strings
+airline_ids = [
+    '56377143', '106062176', '18332190', '22536055', '124476322',
+    '26223583', '2182373406', '38676903', '1542862735', '253340062',
+    '45621423', '20626359', '218730857'
+]
 
-def extract_airline_start(removed_dupl, airline_ids):
+# Define batch size
+BATCH_SIZE = 1000
+
+def extract_airline_start(removed_dupl, airline_ids, batch_size):
     # Ensure all previous indexes are dropped
     removed_dupl.drop_indexes()
     
@@ -25,17 +29,17 @@ def extract_airline_start(removed_dupl, airline_ids):
     removed_dupl.create_index('in_reply_to_user_id_str')
 
     # Define the new collection
-    airline_convo_starters = db['airline_convo_starters']
+    airline_roots = db['airline_roots']
 
-    # Print sample documents to understand the structure
+    # Print a sample document to understand the structure
     sample_doc = removed_dupl.find_one()
-    print("Sample document from 'removed_duplicates':")
+    print("Sample document from 'removed_dupl':")
     pprint.pprint(sample_doc)
 
-    # Query to find documents that match an airline id and have a null 'in_reply_to_status_id_str'
+    # Query to find documents that match an airline id and have a null 'in_reply_to_user_id_str'
     query = {
         'user.id_str': {'$in': airline_ids},
-        'in_reply_to_user_id_str': {'$in': [None, 'null']}  # Checking for None or 'null' string
+        'in_reply_to_user_id_str': {'$in': [None, 'null']}
     }
 
     # Debug: Print the query
@@ -47,29 +51,39 @@ def extract_airline_start(removed_dupl, airline_ids):
     print("Execution plan:")
     pprint.pprint(execution_plan)
 
-    # Find matching documents, limited to the first 1000 results
-    matching_docs = list(removed_dupl.find(query).limit(2781122))
+    # Initialize counters and pagination
+    total_docs = removed_dupl.count_documents(query)
+    print(f"Total matching documents: {total_docs}")
 
-    # Debug: Print the number of matching documents found
-    print(f"Number of matching documents found: {len(matching_docs)}")
-    if matching_docs:
-        # Debug: Print some of the matching documents
-        for doc in matching_docs:
-            if doc.get('in_reply_to_status_id_str') not in [None, 'null']:
-                print("Document with non-null in_reply_to_status_id_str found:")
-                pprint.pprint(doc)
-            else:
-                print("Valid document:")
-                pprint.pprint(doc)
+    processed_docs = 0
 
-        # Insert matching documents into the new collection if there are any
-        airline_convo_starters.insert_many(matching_docs)
-        print(f"Inserted {len(matching_docs)} documents into airline_convo_starters collection.")
-    else:
-        print("No matching documents found.")
+    while processed_docs < total_docs:
+        # Fetch documents in batches
+        matching_docs = list(removed_dupl.find(query).skip(processed_docs).limit(batch_size))
+
+        # Debug: Print the number of matching documents in the current batch
+        print(f"Number of matching documents in batch: {len(matching_docs)}")
+
+        if matching_docs:
+            try:
+                # Insert matching documents into the new collection
+                airline_roots.insert_many(matching_docs)
+                print(f"Inserted {len(matching_docs)} documents into 'airline_convo_starters' collection.")
+            except Exception as e:
+                print(f"Error inserting documents: {e}")
+
+        # Update the count of processed documents
+        processed_docs += len(matching_docs)
+
+        # If the number of documents in the current batch is less than the batch size, break the loop
+        if len(matching_docs) < batch_size:
+            break
+
+    print(f"Total processed documents: {processed_docs}")
 
 # Call the function to extract and insert the documents
-extract_airline_start(removed_dupl, airline_ids)
+extract_airline_start(no_inconsistency, airline_ids, BATCH_SIZE)
+
 
 
 
