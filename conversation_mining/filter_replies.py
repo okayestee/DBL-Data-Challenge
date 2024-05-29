@@ -1,11 +1,12 @@
 from pymongo import MongoClient, ASCENDING
+from tqdm import tqdm
 
 # Function to connect to the MongoDB server and select collections
 def connect_to_db():
     # Connect to the MongoDB server
     client = MongoClient('mongodb://localhost:27017/')
     # Select the database
-    db = client['DBL']
+    db = client['AirplaneMode']
     # Select the collections
     removed_duplicates_collection = db['no_inconsistency']
     return db, removed_duplicates_collection
@@ -26,11 +27,15 @@ def find_replies_in_batches(collection, batch_size):
     # Fetch tweets in batches
     tweets = []
     total_docs = collection.count_documents(query)
-    for skip in range(0, total_docs, batch_size):
-        batch = list(collection.find(query).skip(skip).limit(batch_size))
-        if not batch:
-            break
-        tweets.extend(batch)
+    
+    # Setup progress bar
+    with tqdm(total=total_docs, desc="Fetching replies", unit="tweet") as pbar:
+        for skip in range(0, total_docs, batch_size):
+            batch = list(collection.find(query).skip(skip).limit(batch_size))
+            if not batch:
+                break
+            tweets.extend(batch)
+            pbar.update(len(batch))
     
     return tweets
 
@@ -55,4 +60,6 @@ def main():
     replies = find_replies_in_batches(removed_duplicates_collection, batch_size=10000)
     # Store tweets in a new collection
     store_tweets_in_new_collection(db, replies)
-   
+
+if __name__ == "__main__":
+    main()
