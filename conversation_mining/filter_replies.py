@@ -1,14 +1,11 @@
 from pymongo import MongoClient, ASCENDING
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from tqdm import tqdm
-import os
 
 # Function to connect to the MongoDB server and select collections
 def connect_to_db():
     # Connect to the MongoDB server
     client = MongoClient('mongodb://localhost:27017/')
     # Select the database
-    db = client.DBL2
+    db = client['DBL']
     # Select the collections
     no_inconsistency = db['no_inconsistency']
     return db, no_inconsistency
@@ -30,11 +27,15 @@ def find_replies_in_batches(collection, batch_size):
     # Fetch tweets in batches
     tweets = []
     total_docs = collection.count_documents(query)
-    for skip in range(0, total_docs, batch_size):
-        batch = list(collection.find(query).skip(skip).limit(batch_size))
-        if not batch:
-            break
-        tweets.extend(batch)
+    
+    # Setup progress bar
+    with tqdm(total=total_docs, desc="Fetching replies", unit="tweet") as pbar:
+        for skip in range(0, total_docs, batch_size):
+            batch = list(collection.find(query).skip(skip).limit(batch_size))
+            if not batch:
+                break
+            tweets.extend(batch)
+            pbar.update(len(batch))
     
     return tweets
 
@@ -60,5 +61,4 @@ def main():
     replies = find_replies_in_batches(no_inconsistency_collection, batch_size=10000)
     # Store tweets in a new collection
     store_tweets_in_new_collection(db, replies)
-
    
