@@ -6,7 +6,26 @@ from datetime import datetime, timedelta
 client = MongoClient('mongodb://localhost:27017/')
 db = client['AirplaneMode']
 user_trees_collection = db['user_trees']
+"""
+Summary of Changes:
+Parsing Timestamps:
 
+parse_created_at function converts the created_at field into a datetime object for easy comparison.
+Merging Consecutive Replies:
+
+Same as before, this function merges consecutive replies from the same user, keeping the fields from the first reply and concatenating the text fields.
+Filtering Replies Within 24 Hours:
+
+filter_replies_within_24_hours function recursively checks each node's children.
+It filters out any replies that do not occur within 24 hours of the parent tweet's created_at timestamp.
+Only valid replies are kept, and invalid replies are removed from the tree.
+Main Execution:
+
+Fetches trees from the user_trees collection.
+Processes each tree to merge consecutive replies and filter out replies beyond 24 hours.
+Prints the first two processed trees for verification.
+Clears the user_trees collection and inserts the updated trees.
+"""
 # Function to deserialize a tree from a dictionary
 def deserialize_tree(tree_dict):
     tree = Tree()
