@@ -5,6 +5,8 @@ db = client['DBL2'] #your database
 tweets_collection = db['clean_finalversion'] #your collection within database
 
 removed_dupl = db['removed_duplicates']  # Collection where duplicates are removed
+tweets_collection.create_index('user.id_str')
+
 # Identify duplicates pipeline
 pipeline = [
     {"$group": {
