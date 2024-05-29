@@ -10,25 +10,30 @@ db = client.Airline_data
 collection = db.removed_duplicates
 
 #Batch_size to reduce memory usage
-batch_size = 15000
+batch_size = 100000
 
 def batch_generator(collection, batch_size):
-    total_tweets = collection.count_documents({})
-    for i in range(0, total_tweets, batch_size):
-        tweets_cursor = collection.find({}, {'_id': 0, 'text': 1}).skip(i).limit(batch_size)
-        batch = list(tweets_cursor)
-        yield [clean(tweet['text']) for tweet in batch]
-        del batch
-        gc.collect()
+    tweets_cursor = collection.find({}, {'_id': 0, 'text': 1}).limit(batch_size)
+    batch = list(tweets_cursor)
+    yield [clean(tweet['text']) for tweet in batch]
+    del batch
+    gc.collect()
 
 
 # Initialize BERTopic model
 topic_model = BERTopic()
 
-# Fit the model in batches
+# Initialize an empty list to collect all preprocessed tweets
+all_preprocessed_tweets = []
+
+
+# Process and collect all tweets in batches
 for batch in batch_generator(collection, batch_size):
-    topic_model.partial_fit(batch)
+    all_preprocessed_tweets.extend(batch)
     gc.collect()
+
+# Fit the model on the combined preprocessed tweets
+topics, probs = topic_model.fit_transform(all_preprocessed_tweets)
 
 #Save model to a file
 topic_model.save("bertopic_model")
