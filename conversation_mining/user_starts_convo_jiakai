@@ -1,3 +1,4 @@
+"""
 from pymongo import MongoClient, ASCENDING
 
 # Function to connect to the MongoDB server and select collections
@@ -48,6 +49,75 @@ def store_tweets_in_new_collection(db, tweets):
     # Insert the tweets into the new collection
     if tweets:  # Check if there are any tweets to insert
         new_collection.insert_many(tweets)
+
+def main():
+    # Connect to the database and select the collection
+    db, removed_duplicates_collection = connect_to_db()
+    # Create indexes on relevant fields
+    create_indexes(removed_duplicates_collection)
+    # Find tweets with replies in batches
+    tweets_with_replies = find_tweets_with_replies_in_batches(removed_duplicates_collection, batch_size=10000)
+    # Store tweets in a new collection
+    store_tweets_in_new_collection(db, tweets_with_replies)
+    print("Tweets stored in new collection 'user_starts_conversation' successfully.")
+
+if __name__ == "__main__":
+    main()
+"""
+from pymongo import MongoClient, ASCENDING
+
+# Function to connect to the MongoDB server and select collections
+def connect_to_db():
+    # Connect to the MongoDB server
+    client = MongoClient('mongodb://localhost:27017/')
+    # Select the database
+    db = client['DBL2']
+    # Select the collections
+    no_inconsistency = db['no_inconsistency']
+    return db, no_inconsistency
+
+# Function to create indexes on relevant fields
+def create_indexes(collection):
+    # Create indexes to speed up the queries
+    collection.create_index([("user.id_str", ASCENDING)])
+    collection.create_index([("in_reply_to_status_id_str", ASCENDING)])
+
+# Function to find tweets with replies in batches
+def find_tweets_with_replies_in_batches(collection, batch_size):
+    # List of user IDs to exclude
+    excluded_user_ids = [
+        '56377143', '106062176', '18332190', '22536055', '124476322', '26223583',
+        '2182373406', '38676903', '1542862735', '253340062', '218730857', '45621423', '20626359'
+    ]
+    
+    # Query to match tweets that are not from excluded user IDs and are not replies themselves
+    query = {
+        "user.id_str": {"$nin": excluded_user_ids},
+        "in_reply_to_status_id_str": None
+    }
+    
+    # Fetch tweets in batches
+    tweets = []
+    total_docs = collection.count_documents(query)
+    for skip in range(0, total_docs, batch_size):
+        batch = list(collection.find(query).skip(skip).limit(batch_size))
+        if not batch:
+            break
+        tweets.extend(batch)
+    
+    return tweets
+
+# Function to store tweets in a new collection
+def store_tweets_in_new_collection(db, tweets):
+    # Create or get the 'user_starts_conversation' collection
+    new_collection = db['user_starts_conversation']
+    # Insert the tweets into the new collection
+    if tweets:  # Check if there are any tweets to insert
+        try:
+            new_collection.insert_many(tweets)
+            print(f"Inserted {len(tweets)} tweets into 'user_starts_conversation' collection.")
+        except Exception as e:
+            print(f"Error inserting documents: {e}")
 
 def main():
     # Connect to the database and select the collection
