@@ -10,14 +10,14 @@ db = client.Airline_data
 collection = db.removed_duplicates
 
 #Batch_size to reduce memory usage
-batch_size = 5000
+batch_size = 15000
 
 def batch_generator(collection, batch_size):
     total_tweets = collection.count_documents({})
     for i in range(0, total_tweets, batch_size):
-        tweets_cursor = collection.find({}, {'_id': 0, 'tweet_text': 1}).skip(i).limit(batch_size)
+        tweets_cursor = collection.find({}, {'_id': 0, 'text': 1}).skip(i).limit(batch_size)
         batch = list(tweets_cursor)
-        yield [clean(tweet['tweet_text']) for tweet in batch]
+        yield [clean(tweet['text']) for tweet in batch]
         del batch
         gc.collect()
 
