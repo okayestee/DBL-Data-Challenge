@@ -59,7 +59,23 @@ def save_sample(sample, file_name) -> None:
             counter += 1
             new_file.write(f'Tweet {counter}: {str(content)} \n')
 
-sample = select_random_lines(500, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
-save_sample(sample, 'Sentiment analysis/sample')
+#sample = select_random_lines(500, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
+#save_sample(sample, 'Sentiment analysis/sample')
 
+import nltk
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
+analyzer = SentimentIntensityAnalyzer()
+
+text = "IBM, Lufthansa launch AI studio | Seeking Alpha https://t.co/h7BFds8sFH "
+scores = analyzer.polarity_scores(text)
+print(text)
+print(f'{scores}\n')
+
+# with open('Sentiment analysis/sample', 'r', encoding='utf-8') as file:
+#     texts: list[str] = file.readlines()
+
+# for tweet in texts:
+#      scores = analyzer.polarity_scores(tweet)
+#      print(tweet)
+#      print(f'{scores}\n')
