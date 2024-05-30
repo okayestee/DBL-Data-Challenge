@@ -5,12 +5,11 @@ import json
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
-db = client.DBL2
+db = client.AirplaneMode
 
 # Collections
 replies_collection = db.replies
 convo_starters_collection = db.airline_convo_starters
-trees_collection = db.airline_trees
 
 # Ensure indexes are created
 convo_starters_collection.create_indexes([IndexModel([('id_str', ASCENDING)])])
@@ -113,11 +112,9 @@ def match_trees_with_convo_starters(trees):
 
     # Create matched trees with convo starters as new roots
     for parent_id, children in parent_to_children.items():
-        matched_tweet = convo_starters_collection.find_one({'id_str': parent_id})
+        matched_tweet = convo_starters_collection.find_one({'id_str': parent_id}, {'_id': 0})
         if matched_tweet:
-            matched_trees[parent_id] = {'tweet': matched_tweet, 'children': []}
-            for child in children:
-                matched_trees[parent_id]['children'].extend(child['children'])
+            matched_trees[parent_id] = {'tweet': matched_tweet, 'children': children}
 
     return matched_trees
 
