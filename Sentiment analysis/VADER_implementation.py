@@ -29,7 +29,7 @@ def analyze_sentiment(text):
     return sentiment_score
 
 def get_full_text(tweet):
-    if tweet.get('truncated', False):
+    if tweet.get('truncated', True):
         print('Got Full Text')
         return tweet.get('extended_tweet', {}).get('full_text', '')
 
