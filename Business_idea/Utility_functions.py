@@ -46,3 +46,23 @@ def clean(text):
     output = output.lower()
 
     return output
+
+
+def get_random_tweet():
+    #connect
+    client = pymongo.MongoClient("mongodb://localhost:27017/")
+    db = client.Airline_data
+    collection = db.removed_duplicates
+
+    #pipeline 
+    pipeline = [
+        {
+                '$sample': { 'size': 1 }  # Get one random document
+        },
+        {
+            "$project": {"text":1, '_id': 0
+            }
+        }
+    ]
+
+    return list(collection.aggregate(pipeline))[0]
