@@ -1,126 +1,109 @@
-from pymongo import MongoClient, ASCENDING
-from pymongo.errors import BulkWriteError
-from treelib import Tree
-from tqdm import tqdm
+from pymongo import MongoClient, IndexModel, ASCENDING
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from threading import Lock
+from tqdm import tqdm
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
-db = client['DBL2']
-collection = db['replies']
-starting_tweets_collection = db['user_roots']
+db = client.DBL2
 
-# Create an index on the in_reply_to_status_id field
-collection.create_index([('in_reply_to_status_id', ASCENDING)])
+# Collections
+replies_collection = db.replies
+convo_starters_collection = db.user_roots
+trees_collection = db.user_trees
 
-# Batch size
+# Ensure indexes are created
+convo_starters_collection.create_indexes([IndexModel([('id_str', ASCENDING)])])
+replies_collection.create_indexes([IndexModel([('in_reply_to_status_id_str', ASCENDING)])])
+
+# Initialize a dictionary to hold the tweet relationships
+tweet_dict = {}
+
+# Batch size for processing
 batch_size = 10000
 
-# Lock for thread-safe progress bar update
-lock = Lock()
+# Process conversation starters in batches with progress bar
+processed_count = 0
+convo_starters_total = convo_starters_collection.count_documents({})
+with tqdm(total=convo_starters_total, desc="Processing convo starters") as pbar:
+    while processed_count < convo_starters_total:
+        cursor = convo_starters_collection.find({}).skip(processed_count).limit(batch_size)
+        batch = list(cursor)
+        
+        if not batch:
+            break
+        
+        # Add tweets to the dictionary
+        for tweet in batch:
+            tweet_dict[tweet['id_str']] = {'tweet': tweet, 'children': []}
+        
+        processed_count += len(batch)
+        pbar.update(len(batch))
 
-def fetch_and_store_batch(skip, limit, pbar):
-    # Fetch batch of tweets with in_reply_to_status_id as None
-    tweets = list(collection.find({'in_reply_to_status_id': None}).skip(skip).limit(limit))
+# Fetch replies and add them to the tweet_dict with progress bar
+total_replies = replies_collection.count_documents({})
+with tqdm(total=total_replies, desc="Processing replies") as pbar:
+    cursor = replies_collection.find({})
+    for reply in cursor:
+        tweet_dict[reply['id_str']] = {'tweet': reply, 'children': []}
+        pbar.update(1)
+
+# Initialize a dictionary to keep track of trees
+trees = {}
+
+# Helper function to add nodes to a tree
+def add_node(tweet_id, tree):
+    if tweet_id not in tweet_dict:
+        return None
     
-    # Insert batch into the new collection
-    if tweets:
-        try:
-            starting_tweets_collection.insert_many(tweets, ordered=False)
-        except BulkWriteError as bwe:
-            print(bwe.details)
+    tweet_info = tweet_dict[tweet_id]
+    tweet = tweet_info['tweet']
+    parent_id = tweet.get('in_reply_to_status_id_str')
     
-    # Update the progress bar
-    with lock:
-        pbar.update(len(tweets))
+    # If this tweet is a reply to another tweet
+    if parent_id and parent_id in tweet_dict:
+        parent_node = add_node(parent_id, tree)
+        if parent_node:
+            parent_node['children'].append(tweet_info)
+        else:
+            return None
+    else:
+        # This is a root tweet
+        tree[tweet_id] = tweet_info
 
-# Get the total number of tweets that match the criteria
-total_count = collection.count_documents({'in_reply_to_status_id': None})
+    return tweet_info
 
-# Progress bar setup
-pbar = tqdm(total=total_count)
+# Function to process tweets in parallel
+def process_tweet_batch(batch):
+    local_trees = {}
+    for tweet_id in batch:
+        add_node(tweet_id, local_trees)
+    return local_trees
 
-# Use ThreadPoolExecutor for parallel processing
-with ThreadPoolExecutor(max_workers=4) as executor:
-    futures = [executor.submit(fetch_and_store_batch, skip, batch_size, pbar) for skip in range(0, total_count, batch_size)]
-    
-    # Ensure all futures are completed
-    for future in as_completed(futures):
-        future.result()
+# Create trees for each root tweet in parallel
+all_tweet_ids = list(tweet_dict.keys())
+num_threads = 4
+with tqdm(total=len(all_tweet_ids), desc="Building trees") as pbar:
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        futures = []
+        for i in range(0, len(all_tweet_ids), batch_size):
+            batch = all_tweet_ids[i:i + batch_size]
+            futures.append(executor.submit(process_tweet_batch, batch))
+        
+        for future in as_completed(futures):
+            result = future.result()
+            trees.update(result)
+            pbar.update(batch_size)
 
-pbar.close()
+# Prepare the new collection for storing trees
+trees_collection.drop()  # Drop the collection if it exists to start fresh
 
-# Function to connect to the MongoDB server and select collections
-def connect_to_db():
-    return db['user_roots'], collection, db['user_trees']
+# Store each tree in the new collection
+with tqdm(total=len(trees), desc="Storing trees") as pbar:
+    for root_id, tree in trees.items():
+        trees_collection.insert_one({"root_id": root_id, "tree": tree})
+        pbar.update(1)
 
-# Function to create indexes on relevant fields
-def create_indexes(collection):
-    collection.create_index([("user.id_str", ASCENDING)])
-    collection.create_index([("in_reply_to_status_id_str", ASCENDING)])
-
-# Function to build a single tree starting from a given root document
-def build_tree_for_root(root_doc, replies_collection):
-    tree = Tree()
-    root_id = str(root_doc['_id'])
-    tree.create_node(tag=root_id, identifier=root_id, data=root_doc)
-
-    reply_map = {}
-    for reply_doc in replies_collection.find():
-        parent_id = str(reply_doc.get('in_reply_to_status_id_str'))
-        if parent_id not in reply_map:
-            reply_map[parent_id] = []
-        reply_map[parent_id].append(reply_doc)
-    
-    def add_children(parent_id):
-        if parent_id in reply_map:
-            for child_doc in reply_map[parent_id]:
-                child_id = str(child_doc['_id'])
-                tree.create_node(tag=child_id, identifier=child_id, parent=parent_id, data=child_doc)
-                add_children(child_id)
-    
-    add_children(root_id)
-    return tree
-
-# Function to serialize a tree to a dictionary
-def serialize_tree(tree):
-    def serialize_node(node):
-        return {
-            'id': node.identifier,
-            'tag': node.tag,
-            'data': node.data,
-            'children': [serialize_node(child) for child in tree.children(node.identifier)]
-        }
-    root = tree.get_node(tree.root)
-    return serialize_node(root)
-
-# Function to store trees in the user_trees collection
-def store_trees_in_new_collection(trees, user_trees_collection):
-    serialized_trees = [serialize_tree(tree) for tree in trees]
-    user_trees_collection.insert_many(serialized_trees)
-    print(f"Inserted {len(serialized_trees)} trees into 'user_trees' collection.")
-
-def main():
-    user_roots_collection, replies_collection, user_trees_collection = connect_to_db()
-    create_indexes(replies_collection)
-
-    trees = []
-    count = 0
-    for root_doc in user_roots_collection.find():
-        tree = build_tree_for_root(root_doc, replies_collection)
-        trees.append(tree)
-        # Print the first 2 trees
-        if count < 2:
-            print(f"Tree {count + 1}:")
-            tree.show()
-        count += 1
-
-    store_trees_in_new_collection(trees, user_trees_collection)
-
-if __name__ == "__main__":
-    main()
-
+# Close the connection
 client.close()
 
 
