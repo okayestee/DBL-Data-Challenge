@@ -1,4 +1,24 @@
+import pymongo
 import re
+import gc
+
+def get_full_text(tweet):
+    if tweet.get('truncated', True):
+        return tweet.get('extended_tweet', {}).get('full_text', '')
+
+    else:
+        return tweet.get('text', '')
+    
+
+def batch_generator(collection, batch_size):
+    tweets_cursor = collection.find({}).limit(batch_size)
+    batch = list(get_full_text(tweet) for tweet in tweets_cursor)
+    yield [clean(tweet_text) for tweet_text in batch]
+    del batch
+    gc.collect()
+
+
+
 
 def clean(text):
     #remove @ppl, url
