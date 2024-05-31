@@ -1,100 +1,119 @@
+import json
+import sys
+from tqdm import tqdm
 from pymongo import MongoClient
-from treelib import Tree, Node
+from bson.objectid import ObjectId
 
-# Connect to MongoDB
-client = MongoClient('mongodb://localhost:27017/')
-db = client['AirplaneMode']
-user_trees_collection = db['user_trees']
-'''
-Tree Deserialization and Serialization: Converts trees to and from a dictionary format, enabling easy manipulation.
-Merge Consecutive Replies: Efficiently merges consecutive replies by a single user within each tree, ensuring that only the text fields are combined while retaining the original fields of the first reply.
-Main Execution: Deserializes trees from the database, processes them to merge replies, and then serializes and stores the updated trees back in the database.
+def merge_consecutive_tweets(data):
+    merged_tweets = []
+    current_user_id = None
+    first_tweet_id = None
 
-'''
-# Function to deserialize a tree from a dictionary
-def deserialize_tree(tree_dict):
-    tree = Tree()
-    
-    def add_node(node_dict, parent=None):
-        tree.create_node(tag=node_dict['tag'], identifier=node_dict['id'], parent=parent, data=node_dict['data'])
-        for child in node_dict['children']:
-            add_node(child, parent=node_dict['id'])
-    
-    add_node(tree_dict)
-    return tree
+    for tweet_data in data:
+        tweet_id = tweet_data["id_str"]  # Get tweet ID
+        user_id = tweet_data["user"]["id"]
 
-# Function to serialize a tree to a dictionary
-def serialize_tree(tree):
-    def serialize_node(node):
-        return {
-            'id': node.identifier,
-            'tag': node.tag,
-            'data': node.data,
-            'children': [serialize_node(child) for child in tree.children(node.identifier)]
-        }
-    root = tree.get_node(tree.root)
-    return serialize_node(root)
+        if user_id != current_user_id:
+            if merged_tweets:  # If previous tweet was merged
+                merged_tweets[0]["child_ids"] = [tweet_id]  # Update child_ids of first tweet
+                merged_tweets[0]["is_merged"] = True  # Mark as merged
+                merged_tweets[0]["merged_text"] += " " + tweet_data["text"]  # Merge text
+                if "extended_tweet" in tweet_data:  # Merge extended tweet
+                    if "extended_tweet" in merged_tweets[0]:
+                        merged_tweets[0]["extended_tweet"]["full_text"] += " " + tweet_data["extended_tweet"]["full_text"]
+                    else:
+                        merged_tweets[0]["extended_tweet"] = tweet_data["extended_tweet"]
+                continue
 
-# Function to merge consecutive replies from the same user
-def merge_consecutive_replies(tree):
-    def merge_children(parent_id):
-        children = tree.children(parent_id)
-        merged_children = []
-        i = 0
-        
-        while i < len(children):
-            current_child = children[i]
-            current_user_id = current_child.data['user']['id_str']
-            merged_text = current_child.data['text']
-            
-            j = i + 1
-            while j < len(children) and children[j].data['user']['id_str'] == current_user_id:
-                merged_text += ' ' + children[j].data['text']
-                j += 1
-            
-            # Keep the fields of the first reply, but merge the texts
-            current_child.data['text'] = merged_text
-            merged_children.append(current_child)
-            i = j
-        
-        # Remove all original children nodes
-        for child in children:
-            tree.remove_node(child.identifier)
-        
-        # Re-add merged children
-        for child in merged_children:
-            tree.create_node(tag=child.tag, identifier=child.identifier, parent=parent_id, data=child.data)
-        
-        # Recur for each child
-        for child in merged_children:
-            merge_children(child.identifier)
+            tweet_data["merged_text"] = tweet_data["text"]  # Initialize merged_text field
+            merged_tweets.append(tweet_data)
+            first_tweet_id = tweet_id
+            current_user_id = user_id
+        else:
+            merged_tweets[0]["merged_text"] += " " + tweet_data["text"]
+            if "extended_tweet" in tweet_data:
+                if "extended_tweet" in merged_tweets[0]:
+                    merged_tweets[0]["extended_tweet"]["full_text"] += " " + tweet_data["extended_tweet"]["full_text"]
+                else:
+                    merged_tweets[0]["extended_tweet"] = tweet_data["extended_tweet"]
 
-    merge_children(tree.root)
-    return tree
+    return merged_tweets
 
-def main():
-    trees = []
-    count = 0
-    for tree_dict in user_trees_collection.find():
-        tree = deserialize_tree(tree_dict)
-        tree = merge_consecutive_replies(tree)
-        trees.append(tree)
-        # Print the first 2 trees
-        if count < 2:
-            print(f"Tree {count + 1}:")
-            tree.show()
-        count += 1
-    
-    # Clear the collection before inserting new trees
-    user_trees_collection.delete_many({})
-    
-    # Store the merged trees in the user_trees collection
-    serialized_trees = [serialize_tree(tree) for tree in trees]
-    user_trees_collection.insert_many(serialized_trees)
-    print(f"Inserted {len(serialized_trees)} trees into 'user_trees' collection.")
+def process_tweets(db):
+    cursor = db.airline_trees.find({}, no_cursor_timeout=True)
+
+    for document in cursor:
+        tree_id = str(document["_id"])
+        original_trees = document["tree_data"]
+
+        for tree_key in original_trees:
+            tree = original_trees[tree_key]
+            children = tree["children"]
+
+            total_tweets = len(children)
+            batch_size = 100
+            batches = [children[i:i+batch_size] for i in range(0, total_tweets, batch_size)]
+
+            merged_children = []
+
+            for batch in tqdm(batches, desc=f"Processing Tree {tree_key}", file=sys.stdout):
+                merged_children.extend(merge_consecutive_tweets(batch))
+
+            tree["children"] = merged_children
+
+        db.merged_trees.insert_one({"_id": ObjectId(), "tree_data": original_trees})
+
+    cursor.close()
 
 if __name__ == "__main__":
-    main()
+    client = MongoClient("mongodb://localhost:27017/")
+    db = client.DBL2
+    process_tweets(db)
 
-client.close()
+
+#to check 
+from pymongo import MongoClient
+
+# Connect to MongoDB
+client = MongoClient("mongodb://localhost:27017/")
+db = client.DBL2  # Replace "new_database" with your new database name
+collection = db.airline_trees # Replace "new_collection" with your new collection name
+
+# Query documents from the collection
+cursor = collection.find({})
+
+# Flag to track if consecutive replies are found
+consecutive_replies_found = False
+
+# Iterate over the documents
+for document in cursor:
+    # Iterate over trees in the document
+    for tree_key, tree_data in document["tree_data"].items():
+        children = tree_data["children"]
+        
+        # Iterate over children in the tree
+        for i in range(len(children) - 1):
+            current_tweet = children[i]
+            next_tweet = children[i + 1]
+            
+            # Check if consecutive tweets are from the same user
+            if current_tweet["user"]["id"] == next_tweet["user"]["id"]:
+                # Consecutive replies found
+                consecutive_replies_found = True
+                print(f"Consecutive replies found in Tree {tree_key}:")
+                print(f"Tweet 1: ID: {current_tweet['id_str']}, Text: {current_tweet['text']}")
+                print(f"Tweet 2: ID: {next_tweet['id_str']}, Text: {next_tweet['text']}")
+                print()
+                break  # Break the loop if consecutive replies found
+        
+        # Break the outer loop if consecutive replies found
+        if consecutive_replies_found:
+            break
+    
+    # Break the outer loop if consecutive replies found
+    if consecutive_replies_found:
+        break
+
+# Close the cursor
+cursor.close()
 
