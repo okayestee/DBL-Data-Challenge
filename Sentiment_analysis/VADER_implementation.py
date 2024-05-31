@@ -1,10 +1,11 @@
 from collections.abc import Collection
+from statistics import mean
 from turtle import pos
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import pymongo
 from bson.objectid import ObjectId
-
+import Random_sample as rs
 
 
 # Connect to the database
@@ -15,6 +16,8 @@ collection = db['no_inconsistency']
 
 # Initialize VADER Sentiment Analyzer
 analyzer = SentimentIntensityAnalyzer()
+
+analyzer = rs.update_VADER(analyzer)
 
 # Function to run VADER analysis on text
 def analyze_sentiment(text):
@@ -42,7 +45,13 @@ def add_entire_document(document, new_collection):
 batch_size = 10000
 documents_processed = 0
 
-weird_counter = 0
+trunc_error_counter = 0
+
+batch_mean_compound: list[float] = []
+
+pos_counter = 0
+neg_counter = 0
+neu_counter = 0
 
 if 'sentiment_analysis' not in db.list_collection_names():
     new_collection = db.create_collection("sentiment_analysis")
@@ -65,7 +74,7 @@ while True:
         add_entire_document(document, new_collection)
 
         if text[-1:] == '…':
-            weird_counter += 1
+            trunc_error_counter += 1
             new_collection.update_one(
             {"_id": ObjectId(document.get('_id'))},
             {"$set": {'negativity': sentiment['neg'], 'neutrality': sentiment['neu'], 'positivity' : sentiment['pos'], 'compound sentiment' : sentiment['compound'], 'truncated_error' : True}}
@@ -76,6 +85,23 @@ while True:
             {"$set": {'negativity': sentiment['neg'], 'neutrality': sentiment['neu'], 'positivity' : sentiment['pos'], 'compound sentiment' : sentiment['compound'], 'truncated_error' : False}}
             )    
 
+        if sentiment['compound'] < 0.2:
+            neg_counter += 1
+        elif sentiment['compound'] > 0.25:
+            pos_counter += 1
+        else:
+            neu_counter += 1
+
+        batch_mean_compound[(documents_processed // 10000)] += sentiment['compound']
+    
+    batch_mean_compound[(documents_processed // 10000)] /= 10000 # Gets the mean compound score of the batch
+
     # Update the count of processed documents
     documents_processed += len(batch)
     print(documents_processed)
+
+print(f'truncation errors: {trunc_error_counter}')
+print(f'negatives: {neg_counter}, neutrals: {neu_counter}, positives: {pos_counter}')
+
+compound_mean = mean(batch_mean_compound)
+print(f'mean compound score: {compound_mean}')
