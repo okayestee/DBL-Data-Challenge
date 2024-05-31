@@ -5,17 +5,7 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import pymongo
 from bson.objectid import ObjectId
 
-# analyzer = SentimentIntensityAnalyzer()
 
-# text = 'Christmas ruined'
-
-# with open('Sentiment analysis/sample', 'r', encoding='utf-8') as file:
-#     texts: list[str] = file.readlines()
-
-# for tweet in texts:
-#     scores = analyzer.polarity_scores(tweet)
-#     print(tweet)
-#     print(f'{scores}\n')
 
 # Connect to the database
 client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -49,7 +39,7 @@ def add_entire_document(document, new_collection):
         new_collection.insert_one(document)
 
 ## Process documents in batches
-batch_size = 20000
+batch_size = 10000
 documents_processed = 0
 
 weird_counter = 0
@@ -73,17 +63,19 @@ while True:
         sentiment = analyze_sentiment(text)
 
         add_entire_document(document, new_collection)
-        add_to_document(document.get('_id'), 'negativity', sentiment['neg'], new_collection)
-        add_to_document(document.get('_id'), 'neutrality', sentiment['neu'], new_collection)
-        add_to_document(document.get('_id'), 'positivity', sentiment['pos'], new_collection)
-        add_to_document(document.get('_id'), 'Compound sentiment', sentiment['compound'], new_collection)
 
         if text[-1:] == '…':
             weird_counter += 1
-            add_to_document(document.get('_id'), 'truncated_error', True, new_collection)
+            new_collection.update_one(
+            {"_id": ObjectId(document.get('_id'))},
+            {"$set": {'negativity': sentiment['neg'], 'neutrality': sentiment['neu'], 'positivity' : sentiment['pos'], 'compound sentiment' : sentiment['compound'], 'truncated_error' : True}}
+            )
         else:
-            add_to_document(document.get('_id'), 'truncated_error', False, new_collection)
-    
+            new_collection.update_one(
+            {"_id": ObjectId(document.get('_id'))},
+            {"$set": {'negativity': sentiment['neg'], 'neutrality': sentiment['neu'], 'positivity' : sentiment['pos'], 'compound sentiment' : sentiment['compound'], 'truncated_error' : False}}
+            )    
+
     # Update the count of processed documents
     documents_processed += len(batch)
     print(documents_processed)
