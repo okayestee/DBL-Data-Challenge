@@ -21,10 +21,15 @@ def build_tree(tweet):
     tree = Tree()
     tree.create_node(tweet['id_str'], tweet['id_str'], data=tweet)
     
+    # Remove the _id field from the tweet object
+    tweet.pop('_id', None)
+    
     def add_children(parent_id):
         children = replies.find({"in_reply_to_status_id_str": parent_id})
         for child in children:
             child_id = child['id_str']
+            # Remove the _id field from the child object
+            child.pop('_id', None)
             tree.create_node(child_id, child_id, parent=parent_id, data=child)
             add_children(child_id)
     
