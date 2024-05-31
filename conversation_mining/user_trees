@@ -8,12 +8,12 @@ from treelib import Tree
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
 db = client.AirplaneMode
-airline_convo_starters = db.airline_convo_starters
+user_convo_starters = db.user_convo_starters
 replies = db.replies
-airline_trees = db.airline_trees
+user_trees = db.user_trees
 
 # Create indexes to speed up the search
-airline_convo_starters.create_index([("id_str", ASCENDING)])
+user_convo_starters.create_index([("id_str", ASCENDING)])
 replies.create_index([("in_reply_to_status_id_str", ASCENDING)])
 
 # Function to build tree using treelib
@@ -35,11 +35,18 @@ def build_tree(tweet):
 
 # Function to process a batch of tweets
 def process_batch(batch):
+    error_count = 0
     for tweet in batch:
-        tree = build_tree(tweet)
-        if len(tree.nodes) > 1:
-            tree_dict = tree.to_dict(with_data=True)
-            airline_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": tree_dict})
+        try:
+            tree = build_tree(tweet)
+            if len(tree.nodes) > 1:
+                tree_dict = tree.to_dict(with_data=True)
+                user_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": tree_dict})
+        except pymongo.errors.OperationFailure as e:
+            error_count += 1
+            print(f"Error storing tree for tweet {tweet['id_str']}: {e}")
+    
+    return error_count
 
 # Thread worker function
 def worker():
@@ -47,11 +54,13 @@ def worker():
         batch = queue.get()
         if batch is None:
             break
-        process_batch(batch)
+        error_count = process_batch(batch)
+        error_queue.put(error_count)
         queue.task_done()
 
 # Initialize queue and threading
 queue = Queue()
+error_queue = Queue()
 threads = []
 num_threads = 4
 
@@ -62,12 +71,12 @@ for i in range(num_threads):
 
 # Main loop to process tweets in batches
 batch_size = 10000
-total_tweets = airline_convo_starters.count_documents({})
+total_tweets = user_convo_starters.count_documents({})
 batches = []
 
 with tqdm(total=total_tweets, desc="Processing tweets") as pbar:
     for i in range(0, total_tweets, batch_size):
-        batch = list(airline_convo_starters.find().skip(i).limit(batch_size))
+        batch = list(user_convo_starters.find().skip(i).limit(batch_size))
         queue.put(batch)
         pbar.update(len(batch))
     
@@ -79,4 +88,7 @@ for i in range(num_threads):
 for thread in threads:
     thread.join()
 
-print("Processing complete.")
+# Calculate total error count
+total_errors = sum([error_queue.get() for _ in range(num_threads)])
+
+print(f"Processing complete with {total_errors} errors.")

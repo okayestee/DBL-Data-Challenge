@@ -1,11 +1,28 @@
-import airline_convo_starter
+from pymongo import MongoClient, IndexModel, ASCENDING
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
+from pymongo.errors import BulkWriteError
+
+from remove_duplicates import remove_duplicates
+from remove_inconsistencies import remove_inconsistencies
+from filter_replies import filter_replies
+from user_starting_convo import user_convo_starters
+from airline_starting_convo import airline_convo_starters
+
+def main():
+    remove_duplicates()  # Call the function to remove duplicates
+    remove_inconsistencies()  # Call the function to remove inconsistencies
+    filter_replies() # Call the function to store all the reply tweets in a new collection
+    user_convo_starters() # Call the function to store all user starter tweets in a new collection
+    airline_convo_starters()  # Call the function to store all airline starter tweets in a new collection
+
+if __name__ == "__main__":
+    main()
 
 
-#then all these data folder must be at same level
-data_folder_name: str = 'conversation' 
-data_convo_mining_folder_name: str = 'convo_mining'
-path: str = f'{data_convo_mining_folder_name}/../{data_folder_name}'
-airline_convo_starter.clean_all_files(path)
+
+
+
 
 
 

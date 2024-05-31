@@ -13,18 +13,16 @@ collection = db.removed_duplicates
 
 
 #Batch_size to reduce memory usage
-batch_size = 40000
+batch_size = 100000
 
 
 # Initialize an empty list to collect all preprocessed tweets
-preprocessed_tweets = []
-
+preprocessed_tweets = [clean(get_full_text(tweet)) for tweet in get_random_tweet(batch_size)] 
+gc.collect()
+client.close()
 # Process and collect all tweets in batches
-for batch in batch_generator(collection, batch_size):
-    preprocessed_tweets.extend(batch)
-    gc.collect()
 
-topic_model = BERTopic(nr_topics=25, min_topic_size= 100)
+topic_model = BERTopic(min_topic_size= 200)
 
 # Fit the model on the combined preprocessed tweets
 topics, probs = topic_model.fit_transform(preprocessed_tweets)
