@@ -51,6 +51,7 @@ def worker():
     while True:
         batch = queue.get()
         if batch is None:
+            queue.task_done()
             break
         process_batch(batch)
         queue.task_done()
@@ -68,7 +69,6 @@ for i in range(num_threads):
 # Main loop to process tweets in batches
 batch_size = 10000
 total_tweets = airline_convo_starters.count_documents({})
-batches = []
 
 with tqdm(total=total_tweets, desc="Processing tweets") as pbar:
     for i in range(0, total_tweets, batch_size):
