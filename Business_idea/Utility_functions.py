@@ -48,7 +48,7 @@ def clean(text):
     return output
 
 
-def get_random_tweet():
+def get_random_tweet(batch_size):
     #connect
     client = pymongo.MongoClient("mongodb://localhost:27017/")
     db = client.Airline_data
@@ -57,12 +57,11 @@ def get_random_tweet():
     #pipeline 
     pipeline = [
         {
-                '$sample': { 'size': 1 }  # Get one random document
-        },
-        {
-            "$project": {"text":1, '_id': 0
-            }
+                '$sample': { 'size': batch_size }  # Get random document
         }
+       
     ]
 
-    return list(collection.aggregate(pipeline))[0]
+    return list(collection.aggregate(pipeline))
+
+
