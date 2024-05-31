@@ -66,6 +66,8 @@ while True:
         print('Sentiment Analysis Finished!')
         break  # Exit loop if no more documents are retrieved
     
+    batch_mean_compound.append(0)
+
     # Analyze sentiment for each document in the batch
     for document in batch:
         text = get_full_text(document)
