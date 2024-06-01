@@ -7,10 +7,10 @@ from treelib import Tree
 
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
-db = client.AirplaneMode
-airline_convo_starters = db.airline_convo_starters
+db = client.DBL_test
+airline_convo_starters = db.root
 replies = db.replies
-airline_trees = db.airline_trees
+airline_trees = db.airline_test
 
 # Create indexes to speed up the search
 airline_convo_starters.create_index([("id_str", ASCENDING)])
