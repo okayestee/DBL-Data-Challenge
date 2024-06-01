@@ -1,144 +1,55 @@
 from pymongo import MongoClient
-from treelib import Tree, Node
 from datetime import datetime, timedelta
+# horizontal
+# Define the threshold for 24 hours
+threshold_hours = 24
 
-# Connect to MongoDB
+# Connect to MongoDB and specify the collections
 client = MongoClient('mongodb://localhost:27017/')
-db = client['AirplaneMode']
-user_trees_collection = db['user_trees']
-"""
-Summary of Changes:
-Parsing Timestamps:
+db = client['DBL2']
+old_collection = db['merge_trees']  # Your original collection with merged tweets
+new_collection = db['time_filter']  # New collection for filtered tweets
 
-parse_created_at function converts the created_at field into a datetime object for easy comparison.
-Merging Consecutive Replies:
 
-Same as before, this function merges consecutive replies from the same user, keeping the fields from the first reply and concatenating the text fields.
-Filtering Replies Within 24 Hours:
+def filter_and_copy_tree(document):
+    tree_data = document.get('tree_data', {})
+    root_created_at = None
+    root_data = tree_data.get(document['tree_id'], {}).get('data', {})
+    if 'created_at' in root_data:
+        root_created_at = datetime.strptime(root_data['created_at'], '%a %b %d %H:%M:%S %z %Y')
 
-filter_replies_within_24_hours function recursively checks each node's children.
-It filters out any replies that do not occur within 24 hours of the parent tweet's created_at timestamp.
-Only valid replies are kept, and invalid replies are removed from the tree.
-Main Execution:
+    if root_created_at is None:
+        print(f"Warning: 'created_at' field is missing for document with _id: {document.get('_id', '')}")
+        return None
 
-Fetches trees from the user_trees collection.
-Processes each tree to merge consecutive replies and filter out replies beyond 24 hours.
-Prints the first two processed trees for verification.
-Clears the user_trees collection and inserts the updated trees.
-"""
-# Function to deserialize a tree from a dictionary
-def deserialize_tree(tree_dict):
-    tree = Tree()
-    
-    def add_node(node_dict, parent=None):
-        tree.create_node(tag=node_dict['tag'], identifier=node_dict['id'], parent=parent, data=node_dict['data'])
-        for child in node_dict['children']:
-            add_node(child, parent=node_dict['id'])
-    
-    add_node(tree_dict)
-    return tree
+    filtered_tree = {'tree_id': document['tree_id'], 'data': root_data.copy()}
+    filtered_children = []
+    for child in tree_data.get(document['tree_id'], {}).get('children', []):
+        child_created_at = None
+        if 'created_at' in child:
+            child_created_at = datetime.strptime(child['created_at'], '%a %b %d %H:%M:%S %z %Y')
+        if child_created_at is None:
+            print(f"Warning: 'created_at' field is missing for a child of document with _id: {document.get('_id', '')}")
+            continue
 
-# Function to serialize a tree to a dictionary
-def serialize_tree(tree):
-    def serialize_node(node):
-        return {
-            'id': node.identifier,
-            'tag': node.tag,
-            'data': node.data,
-            'children': [serialize_node(child) for child in tree.children(node.identifier)]
-        }
-    root = tree.get_node(tree.root)
-    return serialize_node(root)
+        if abs(root_created_at - child_created_at).total_seconds() <= threshold_hours * 3600:
+            filtered_children.append(child.copy())  # Add child if within 24 hours
 
-# Function to parse the 'created_at' field into a datetime object
-def parse_created_at(tweet):
-    return datetime.strptime(tweet['created_at'], '%a %b %d %H:%M:%S +0000 %Y')
+    if filtered_children:
+        filtered_tree['children'] = filtered_children
+        return filtered_tree
+    else:
+        print(f"Document with _id {document.get('_id', '')} has no children within 24 hours, skipping...")
+        return None
 
-# Function to merge consecutive replies from the same user
-def merge_consecutive_replies(tree):
-    def merge_children(parent_id):
-        children = tree.children(parent_id)
-        merged_children = []
-        i = 0
-        
-        while i < len(children):
-            current_child = children[i]
-            current_user_id = current_child.data['user']['id_str']
-            merged_text = current_child.data['text']
-            
-            j = i + 1
-            while j < len(children) and children[j].data['user']['id_str'] == current_user_id:
-                merged_text += ' ' + children[j].data['text']
-                j += 1
-            
-            # Keep the fields of the first reply, but merge the texts
-            current_child.data['text'] = merged_text
-            merged_children.append(current_child)
-            i = j
-        
-        # Remove all original children nodes
-        for child in children:
-            tree.remove_node(child.identifier)
-        
-        # Re-add merged children
-        for child in merged_children:
-            tree.create_node(tag=child.tag, identifier=child.identifier, parent=parent_id, data=child.data)
-        
-        # Recur for each child
-        for child in merged_children:
-            merge_children(child.identifier)
 
-    merge_children(tree.root)
-    return tree
-
-# Function to filter out tweets that do not respond within 24 hours
-def filter_replies_within_24_hours(tree):
-    def filter_children(parent_id):
-        children = tree.children(parent_id)
-        parent_created_at = parse_created_at(tree.get_node(parent_id).data)
-        valid_children = []
-        
-        for child in children:
-            child_created_at = parse_created_at(child.data)
-            if child_created_at - parent_created_at <= timedelta(hours=24):
-                valid_children.append(child)
-                filter_children(child.identifier)  # Recur for valid children
-            else:
-                tree.remove_node(child.identifier)  # Remove invalid children
-        
-        # Ensure only valid children are kept
-        for child in children:
-            tree.remove_node(child.identifier)
-        for child in valid_children:
-            tree.create_node(tag=child.tag, identifier=child.identifier, parent=parent_id, data=child.data)
-    
-    filter_children(tree.root)
-    return tree
-
-def main():
-    trees = []
-    count = 0
-    for tree_dict in user_trees_collection.find():
-        tree = deserialize_tree(tree_dict)
-        tree = merge_consecutive_replies(tree)
-        tree = filter_replies_within_24_hours(tree)
-        trees.append(tree)
-        # Print the first 2 trees
-        if count < 2:
-            print(f"Tree {count + 1}:")
-            tree.show()
-        count += 1
-    
-    # Clear the collection before inserting new trees
-    user_trees_collection.delete_many({})
-    
-    # Store the processed trees in the user_trees collection
-    serialized_trees = [serialize_tree(tree) for tree in trees]
-    user_trees_collection.insert_many(serialized_trees)
-    print(f"Inserted {len(serialized_trees)} trees into 'user_trees' collection.")
-
-if __name__ == "__main__":
-    main()
-
-client.close()
+for document in old_collection.find():
+    filtered_document = filter_and_copy_tree(document.copy())
+    if filtered_document:
+        print("Filtered document created, inserting...")
+        try:
+            new_collection.insert_one(filtered_document)
+            print(f"Document {filtered_document.get('_id', '')} inserted into the new collection.")
+        except Exception as e:
+            print(f"Error inserting document {filtered_document.get('_id', '')} into the new collection: {str(e)}")
 
