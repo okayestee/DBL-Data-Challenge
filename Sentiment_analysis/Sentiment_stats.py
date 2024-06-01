@@ -24,12 +24,15 @@ while True:
         print('Sentiment Analysis Finished!')
         break  # Exit loop if no more documents are retrieved
 
-    batch_mean_compound[(documents_processed // batch_size)] = 0
-
+    batch_mean_compound.append(0)
+    
     for document in batch:
+        if document.get('truncated_error') == True:
+            trunc_error_counter += 1
+
         compound_score = document.get('compound sentiment')
 
-        if compound_score < 0.2:
+        if compound_score < -0.2:
             neg_counter += 1
         elif compound_score > 0.25:
             pos_counter += 1
