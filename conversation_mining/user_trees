@@ -39,21 +39,22 @@ def build_tree(tweet):
     return tree
 
 # Function to process a batch of tweets
-def process_batch(batch):
+def process_batch(batch, pbar_store):
     for tweet in batch:
         tree = build_tree(tweet)
         if len(tree.nodes) > 1:
             tree_dict = tree.to_dict(with_data=True)
             user_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": tree_dict})
+            pbar_store.update(1)
 
 # Thread worker function
-def worker():
+def worker(pbar_store):
     while True:
         batch = queue.get()
         if batch is None:
             queue.task_done()
             break
-        process_batch(batch)
+        process_batch(batch, pbar_store)
         queue.task_done()
 
 # Initialize queue and threading
@@ -61,27 +62,32 @@ queue = Queue()
 threads = []
 num_threads = 4
 
-for i in range(num_threads):
-    thread = threading.Thread(target=worker)
-    thread.start()
-    threads.append(thread)
-
-# Main loop to process tweets in batches
-batch_size = 10000
+# Get the total number of tweets to process
 total_tweets = user_convo_starters.count_documents({})
 
-with tqdm(total=total_tweets, desc="Processing tweets") as pbar:
-    for i in range(0, total_tweets, batch_size):
-        batch = list(user_convo_starters.find().skip(i).limit(batch_size))
-        queue.put(batch)
-        pbar.update(len(batch))
-    
-    queue.join()
+# Progress bar for storing trees
+with tqdm(total=total_tweets, desc="Storing trees") as pbar_store:
+    for i in range(num_threads):
+        thread = threading.Thread(target=worker, args=(pbar_store,))
+        thread.start()
+        threads.append(thread)
 
-# Stop workers
-for i in range(num_threads):
-    queue.put(None)
-for thread in threads:
-    thread.join()
+    # Main loop to process tweets in batches
+    batch_size = 10000
+    num_batches = (total_tweets + batch_size - 1) // batch_size  # Calculate number of batches needed
+
+    with tqdm(total=total_tweets, desc="Processing tweets") as pbar_process:
+        for i in range(num_batches):
+            batch = list(user_convo_starters.find().skip(i * batch_size).limit(batch_size))
+            queue.put(batch)
+            pbar_process.update(len(batch))
+        
+        queue.join()
+
+    # Stop workers
+    for i in range(num_threads):
+        queue.put(None)
+    for thread in threads:
+        thread.join()
 
 print("Processing complete.")
