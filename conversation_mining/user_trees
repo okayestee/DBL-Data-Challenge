@@ -24,27 +24,42 @@ def build_tree(tweet):
     # Remove the _id field from the tweet object
     tweet.pop('_id', None)
     
-    def add_children(parent_id):
-        children = replies.find({"in_reply_to_status_id_str": parent_id})
+    def add_children(parent_node):
+        children = replies.find({"in_reply_to_status_id_str": parent_node.identifier})
         for child in children:
             child_id = child['id_str']
             # Remove the _id field from the child object
             child.pop('_id', None)
-            tree.create_node(child_id, child_id, parent=parent_id, data=child)
-            add_children(child_id)
+            child_node = tree.create_node(child_id, child_id, parent=parent_node.identifier, data=child)
+            add_children(child_node)  # Recursively add children for the current child node
     
-    add_children(tweet['id_str'])
+    add_children(tree.get_node(tweet['id_str']))
     
     # Return the tree
     return tree
+
+# Function to flatten the tree structure
+def flatten_tree(tree):
+    tree_dict = tree.to_dict(with_data=True)
+    flattened_tree = list(tree_dict.values())[0]
+    
+    # Recursively flatten child nodes
+    def flatten_children(node):
+        children = node.get('children', [])
+        if children:
+            node['children'] = [flatten_children(child) for child in children]
+        return node
+    
+    flattened_tree = flatten_children(flattened_tree)
+    return flattened_tree
 
 # Function to process a batch of tweets
 def process_batch(batch, pbar_store):
     for tweet in batch:
         tree = build_tree(tweet)
         if len(tree.nodes) > 1:
-            tree_dict = tree.to_dict(with_data=True)
-            user_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": tree_dict})
+            flattened_tree = flatten_tree(tree)
+            user_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": flattened_tree})
             pbar_store.update(1)
 
 # Thread worker function

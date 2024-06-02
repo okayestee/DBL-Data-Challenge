@@ -7,10 +7,10 @@ from treelib import Tree
 
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
-db = client.DBL_test
-airline_convo_starters = db.root
+db = client.AirplaneMode
+airline_convo_starters = db.airline_convo_starters
 replies = db.replies
-airline_trees = db.airline_test
+airline_trees = db.airline_trees
 
 # Create indexes to speed up the search
 airline_convo_starters.create_index([("id_str", ASCENDING)])
@@ -44,7 +44,8 @@ def process_batch(batch):
         tree = build_tree(tweet)
         if len(tree.nodes) > 1:
             tree_dict = tree.to_dict(with_data=True)
-            airline_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": tree_dict})
+            tree_data = tree_dict.pop(tweet['id_str'])
+            airline_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": tree_data})
 
 # Thread worker function
 def worker():
