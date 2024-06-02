@@ -3,7 +3,6 @@ from pymongo import MongoClient, ASCENDING
 from tqdm import tqdm
 import threading
 from queue import Queue
-from treelib import Tree
 
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
@@ -16,36 +15,40 @@ airline_trees = db.airline_trees
 airline_convo_starters.create_index([("id_str", ASCENDING)])
 replies.create_index([("in_reply_to_status_id_str", ASCENDING)])
 
-# Function to build tree using treelib
+# Function to build tree
 def build_tree(tweet):
-    tree = Tree()
-    tree.create_node(tweet['id_str'], tweet['id_str'], data=tweet)
+    # Initialize tree node with data
+    tree = {"id_str": tweet['id_str'], "data": tweet, "children": []}
     
     # Remove the _id field from the tweet object
     tweet.pop('_id', None)
     
-    def add_children(parent_id):
-        children = replies.find({"in_reply_to_status_id_str": parent_id})
+    # Recursive function to add children nodes
+    def add_children(node):
+        # Find replies for the current node
+        children = replies.find({"in_reply_to_status_id_str": node["id_str"]})
         for child in children:
-            child_id = child['id_str']
             # Remove the _id field from the child object
             child.pop('_id', None)
-            tree.create_node(child_id, child_id, parent=parent_id, data=child)
-            add_children(child_id)
+            # Create child node with its children recursively
+            child_node = {"id_str": child['id_str'], "data": child, "children": []}
+            child_node["children"] = add_children(child_node)  # Recursively add children
+            # Append child node to current node's children list
+            node["children"].append(child_node)
+        return node["children"]
     
-    add_children(tweet['id_str'])
+    # Add children to the root node
+    tree["children"] = add_children(tree)
     
-    # Return the tree
+    # Return the constructed tree
     return tree
 
 # Function to process a batch of tweets
 def process_batch(batch):
     for tweet in batch:
         tree = build_tree(tweet)
-        if len(tree.nodes) > 1:
-            tree_dict = tree.to_dict(with_data=True)
-            tree_data = tree_dict.pop(tweet['id_str'])
-            airline_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": tree_data})
+        if tree["children"]:
+            airline_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": tree})
 
 # Thread worker function
 def worker():
