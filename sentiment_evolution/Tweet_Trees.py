@@ -1,65 +1,81 @@
-from pymongo import MongoClient, InsertOne
-from treelib import Tree
+import pymongo
+from pymongo import MongoClient, ASCENDING
 from tqdm import tqdm
+import threading
+from queue import Queue
+from treelib import Tree
 
 # Connect to MongoDB
-client = MongoClient('mongodb://localhost:27017/')
+client = MongoClient("mongodb://localhost:27017/")
 db = client.AirplaneMode
-
-# Collections
-no_single_tweets_collection = db.no_single_tweets
+tweets_collection = db.no_single_tweets
 tweet_trees_collection = db.Tweet_Trees
 
-# Ensure the Tweet_Trees collection is empty
-tweet_trees_collection.drop()
+# Create an index to speed up the search
+tweets_collection.create_index([("id_str", ASCENDING)])
+tweets_collection.create_index([("in_reply_to_status_id_str", ASCENDING)])
 
-# Function to build tree and store in collection
-def build_tree_batch(documents):
+# Function to build tree using treelib
+def build_tree(tweet):
     tree = Tree()
-
-    for doc in documents:
-        tweet_id = doc['id_str']
-        parent_id = doc.get('in_reply_to_status_id_str')
-
-        if parent_id:
-            try:
-                tree.create_node(tweet_id, tweet_id, parent=parent_id, data=doc)
-            except treelib.exceptions.NodeIDAbsentError:
-                continue  # Skip if parent node does not exist
-        else:
-            tree.create_node(tweet_id, tweet_id, data=doc)
-
+    tree.create_node(tweet['id_str'], tweet['id_str'], data=tweet)
+    
+    def add_children(parent_id):
+        children = tweets_collection.find({"in_reply_to_status_id_str": parent_id})
+        for child in children:
+            child_id = child['id_str']
+            tree.create_node(child_id, child_id, parent=parent_id, data=child)
+            add_children(child_id)
+    
+    add_children(tweet['id_str'])
+    
+    # Return the tree
     return tree
 
-# Function to fetch batch of documents
-def fetch_batch(collection, query, projection, skip, limit):
-    return list(collection.find(query, projection).skip(skip).limit(limit))
+# Function to process a batch of starting tweets
+def process_batch(batch):
+    for tweet in batch:
+        tree = build_tree(tweet)
+        if len(tree.nodes) > 1:
+            tree_dict = tree.to_dict(with_data=True)
+            tweet_trees_collection.insert_one({"root_id": tweet['id_str'], "tree": tree_dict})
 
-# Function to build tree and store in collection
-def build_tree_batch_and_store(batch_size, total_docs):
-    for skip in range(0, total_docs, batch_size):
-        batch_documents = fetch_batch(no_single_tweets_collection, {}, {'_id': 0}, skip, batch_size)
-        if not batch_documents:
+# Thread worker function
+def worker():
+    while True:
+        batch = queue.get()
+        if batch is None:
+            queue.task_done()
             break
+        process_batch(batch)
+        queue.task_done()
 
-        tweet_tree = build_tree_batch(batch_documents)
-        if tweet_tree.size() > 0:
-            tweet_trees_collection.insert_one({'tree': tweet_tree.to_dict()})
+# Initialize queue and threading
+queue = Queue()
+threads = []
+num_threads = 4
 
-# Main function to build trees and store in collection
-def main():
-    batch_size = 10000
+for i in range(num_threads):
+    thread = threading.Thread(target=worker)
+    thread.start()
+    threads.append(thread)
 
-    # Get total count of documents in no_single_tweets collection
-    total_docs = no_single_tweets_collection.count_documents({})
+# Main loop to process tweets in batches
+batch_size = 10000
+total_tweets = tweets_collection.count_documents({"in_reply_to_status_id_str": None})
 
-    # Build trees and store in collection
-    with tqdm(total=total_docs, desc="Building trees and storing in collection") as pbar:
-        build_tree_batch_and_store(batch_size, total_docs)
-        pbar.update(total_docs)
+with tqdm(total=total_tweets, desc="Processing starting tweets") as pbar:
+    for i in range(0, total_tweets, batch_size):
+        batch = list(tweets_collection.find({"in_reply_to_status_id_str": None}).skip(i).limit(batch_size))
+        queue.put(batch)
+        pbar.update(len(batch))
+    
+    queue.join()
 
-if __name__ == "__main__":
-    main()
+# Stop workers
+for i in range(num_threads):
+    queue.put(None)
+for thread in threads:
+    thread.join()
 
-# Close the connection
-client.close()
+print("Processing complete.")

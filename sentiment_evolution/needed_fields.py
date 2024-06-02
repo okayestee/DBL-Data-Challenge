@@ -19,19 +19,23 @@ def fetch_batch(collection, query, projection, skip, limit):
 # Function to extract and insert needed fields into the needed_fields collection
 def extract_and_insert_needed_fields(batch_size, total_docs):
     for skip in range(0, total_docs, batch_size):
-        batch = fetch_batch(no_inconsistency_collection, {}, {'_id': 0, 'id_str': 1, 'in_reply_to_status_id_str': 1, 'created_at': 1, 'text': 1, 'user.name': 1}, skip, batch_size)
+        batch = fetch_batch(no_inconsistency_collection, {}, {'_id': 0, 'id_str': 1, 'in_reply_to_status_id_str': 1, 'created_at': 1, 'text': 1, 'extended_tweet.full_text': 1, 'user.name': 1}, skip, batch_size)
         if not batch:
             break
-        processed_docs = [
-            {
+        processed_docs = []
+        for doc in batch:
+            # Check if 'extended_tweet' exists and has 'full_text'
+            if 'extended_tweet' in doc and 'full_text' in doc['extended_tweet']:
+                text = doc['extended_tweet']['full_text']
+            else:
+                text = doc.get('text', '')  # Fall back to 'text' if 'extended_tweet.full_text' doesn't exist
+            processed_docs.append({
                 'id_str': doc['id_str'],
                 'in_reply_to_status_id_str': doc.get('in_reply_to_status_id_str'),
                 'created_at': doc['created_at'],
-                'text': doc['text'],
+                'text': text,
                 'user_name': doc['user']['name']
-            }
-            for doc in batch
-        ]
+            })
         if processed_docs:
             requests = [InsertOne(doc) for doc in processed_docs]
             needed_fields_collection.bulk_write(requests)

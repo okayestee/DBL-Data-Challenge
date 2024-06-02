@@ -9,43 +9,32 @@ db = client.AirplaneMode
 no_inconsistency_collection = db.needed_fields
 no_single_tweets_collection = db.no_single_tweets
 
-# Ensure the no_single_tweets collection is empty
-no_single_tweets_collection.drop()
-
-# Function to fetch batch of documents
-def fetch_batch(collection, query, projection, skip, limit):
-    return list(collection.find(query, projection).skip(skip).limit(limit))
+# MongoDB query to filter out tweets where in_reply_to_status_id_str is null and counted_reply is 0
+query = {
+    "$or": [
+        {"in_reply_to_status_id_str": {"$ne": None}},
+        {"counted_reply": {"$gt": 0}}
+    ]
+}
 
 # Function to filter and insert tweets into the no_single_tweets collection
-def filter_and_insert_tweets(batch_size, total_docs):
-    for skip in range(0, total_docs, batch_size):
-        batch = fetch_batch(no_inconsistency_collection, {}, {'_id': 0}, skip, batch_size)
-        if not batch:
-            break
-        filtered_tweets = [
-            doc for doc in batch
-            if not (doc.get('in_reply_to_status_id_str') is None and doc.get('counted_reply', 0) == 0)
-        ]
-        if filtered_tweets:
-            requests = [InsertOne(doc) for doc in filtered_tweets]
+def filter_and_insert_tweets():
+    # Fetch all documents matching the query from no_inconsistency_collection
+    all_tweets = list(no_inconsistency_collection.find(query, {'_id': 0}))
+    
+    # Insert filtered tweets into no_single_tweets_collection
+    if all_tweets:
+        with tqdm(total=len(all_tweets), desc="Inserting tweets") as pbar:
+            requests = [InsertOne(doc) for doc in all_tweets]
             no_single_tweets_collection.bulk_write(requests)
-            yield len(filtered_tweets)
+            pbar.update(len(all_tweets))
+        return len(all_tweets)
+    else:
+        return 0
 
-# Main function to filter and insert tweets into the no_single_tweets collection
-def main():
-    batch_size = 10000
-
-    # Get total count of documents in no_inconsistency collection
-    total_docs = no_inconsistency_collection.count_documents({})
-    print("Total documents:", total_docs)
-
-    # Filter and insert tweets with replies into the no_single_tweets collection
-    with tqdm(total=total_docs, desc="Filtering and inserting tweets") as pbar:
-        for count in filter_and_insert_tweets(batch_size, total_docs):
-            pbar.update(count)
-
-if __name__ == "__main__":
-    main()
+# Call the function
+filtered_tweet_count = filter_and_insert_tweets()
+print(f"{filtered_tweet_count} tweets filtered and inserted into no_single_tweets_collection.")
 
 # Close the connection
 client.close()

@@ -1,44 +1,35 @@
 from pymongo import MongoClient
 from tqdm import tqdm
 
-# Replace with your MongoDB connection string
+# Step 1: Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
+db = client['AirplaneMode']
+collection = db['needed_fields']
 
-# Select the AirplaneMode database and the needed_fields collection
-db = client.AirplaneMode
-collection = db.needed_fields
+# Step 2: Initialize a Dictionary for Counting Replies
+reply_count = {}
 
-# Get the total number of documents in the collection
-total_docs = collection.count_documents({})
-
-# Define batch size
-batch_size = 10000
-
-# Process documents in batches
-for skip in tqdm(range(0, total_docs, batch_size), desc="Processing batches"):
-    # Dictionary to keep track of reply counts within the batch
-    reply_counts = {}
-
-    # Get documents for the current batch
-    batch = collection.find({}, skip=skip, limit=batch_size)
-
-    # Iterate through documents in the batch to count replies
-    for doc in batch:
-        in_reply_to_status_id_str = doc.get("in_reply_to_status_id_str")
-        if in_reply_to_status_id_str:
-            if in_reply_to_status_id_str in reply_counts:
-                reply_counts[in_reply_to_status_id_str] += 1
+# Step 3: First Iteration - Count Replies
+total_documents = collection.count_documents({})
+with tqdm(total=total_documents, desc="Counting replies") as pbar:
+    for tweet in collection.find({}, {"in_reply_to_status_id_str": 1}):
+        in_reply_to = tweet.get('in_reply_to_status_id_str')
+        if in_reply_to:
+            if in_reply_to in reply_count:
+                reply_count[in_reply_to] += 1
             else:
-                reply_counts[in_reply_to_status_id_str] = 1
+                reply_count[in_reply_to] = 1
+        pbar.update(1)
 
-    # Update documents in the batch with counted_reply field
-    for doc in batch:
-        id_str = doc.get("id_str")
-        counted_reply = reply_counts.get(id_str, 0)
+# Step 4: Second Iteration - Update Documents
+with tqdm(total=total_documents, desc="Updating documents") as pbar:
+    for tweet in collection.find({}, {"id_str": 1}):
+        tweet_id = tweet.get('id_str')
+        counted_reply = reply_count.get(tweet_id, 0)
         collection.update_one(
-            {"_id": doc["_id"]},
+            {"_id": tweet["_id"]},
             {"$set": {"counted_reply": counted_reply}}
         )
+        pbar.update(1)
 
-# Close the connection
-client.close()
+print("Update completed.")
