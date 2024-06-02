@@ -52,7 +52,7 @@ def get_random_tweet(batch_size):
     #connect
     client = pymongo.MongoClient("mongodb://localhost:27017/")
     db = client.Airline_data
-    collection = db.removed_duplicates
+    collection = db.no_inconsistency
 
     #pipeline 
     pipeline = [
@@ -65,3 +65,13 @@ def get_random_tweet(batch_size):
     return list(collection.aggregate(pipeline))
 
 
+def add_entire_document(document, new_collection):
+        new_collection.insert_one(document)
+
+def add_to_document(doc_id, new_field: str, new_value, new_collection):
+    collection = new_collection
+    if collection.find_one({'_id' : doc_id}) != None:
+        collection.update_one(
+        {"_id": ObjectId(str(doc_id))},
+        {"$set": {new_field: new_value}}
+        )
