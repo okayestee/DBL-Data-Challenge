@@ -5,7 +5,7 @@ from tqdm import tqdm
 def remove_duplicates(db):
     # Connect to MongoDB
     client = MongoClient('mongodb://localhost:27017/')
-    db = client.dbb  # Your database
+    db = client[db]  # Your database
     tweets_collection = db['cleaned_data']  # Your collection within database
     removed_dupl = db['removed_duplicates']  # New collection where duplicates are removed
 
