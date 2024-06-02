@@ -145,8 +145,8 @@ def add_merged_field(tree_data, merged_tweet_ids):
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['AirplaneMode']
-user_trees_collection = db['user_trees_Demo']
-merged_trees_collection = db['merged_trees_user']
+user_trees_collection = db['airline_trees']
+merged_trees_collection = db['merged_trees']
 
 # Fetch the documents from the collection
 documents = user_trees_collection.find({})
