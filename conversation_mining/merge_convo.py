@@ -1,117 +1,53 @@
-'''
-from pymongo import MongoClient
-
-# Connect to MongoDB
-client = MongoClient('mongodb://localhost:27017/')
-db = client['DBL_test']  # Replace with your database name
-old_collection = db['airline_test']  # Replace with your old collection name
-new_collection = db['merge_trees_test1']  # Replace with your new collection name
-
-def merge_consecutive_tweets(document):
-    def merge_tweets(tweets):
-        merged_tweets = []
-        i = 0
-        while i < len(tweets):
-            current_tweet = tweets[i]
-            current_user = current_tweet['user']['id_str']
-            j = i + 1
-            
-            while j < len(tweets) and tweets[j]['user']['id_str'] == current_user:
-                # Combine text fields
-                current_tweet['text'] += ' ' + tweets[j]['text']
-                # Combine extended_tweet fields if present
-                if 'extended_tweet' in current_tweet and 'extended_tweet' in tweets[j]:
-                    current_tweet['extended_tweet']['full_text'] += ' ' + tweets[j]['extended_tweet']['full_text']
-                elif 'extended_tweet' in tweets[j]:
-                    if 'extended_tweet' in current_tweet:
-                        current_tweet['extended_tweet']['full_text'] += ' ' + tweets[j]['extended_tweet']['full_text']
-                    else:
-                        current_tweet['extended_tweet'] = tweets[j]['extended_tweet']
-                j += 1
-                
-            merged_tweets.append(current_tweet)
-            i = j
-        
-        return merged_tweets
-
-    def update_in_reply_to_status_id(tweets):
-        for index in range(1, len(tweets)):
-            tweets[index]['in_reply_to_status_id'] = tweets[index-1]['id']
-            tweets[index]['in_reply_to_status_id_str'] = tweets[index-1]['id_str']
-
-    def delete_second_reply(tweets):
-        if len(tweets) > 1:
-            del tweets[1]
-
-    def traverse_and_merge(node):
-        if 'children' not in node:
-            return
-
-        # Merge consecutive tweets in the current node's children
-        for child_id in node['children']:
-            node['children'][child_id] = merge_tweets(node['children'][child_id])
-            # Update in_reply_to_status_id for merged tweets
-            update_in_reply_to_status_id(node['children'][child_id])
-            # Delete the second reply of merged tweets
-            delete_second_reply(node['children'][child_id])
-
-            # Update in_reply_to_status_id for children of merged tweets
-            for tweet in node['children'][child_id]:
-                if 'children' in tweet:
-                    traverse_and_merge(tweet)
-
-        # Recursively apply to all children
-        for child_id in node['children']:
-            traverse_and_merge(node['children'][child_id])
-
-    # Start merging from the root document
-    traverse_and_merge(document)
-
-# Process documents and insert into new collection
-for document in old_collection.find():
-    merge_consecutive_tweets(document.copy())
-    new_collection.insert_one(document)
-'''
-
-
 from pymongo import MongoClient
 
 def merge_consecutive_tweets(tree_data):
     merged_tweets = {}  # Dictionary to store merged tweets
+    merged_tweet_ids = set()  # Set to store IDs of merged tweets
 
+    # Iterate over the root nodes in the tree data
+    for root_id, root_info in tree_data.items():
+        # Check if the node has children
+        if 'children' in root_info:
+            # Traverse each subtree and check for consecutive replies
+            for child_info in root_info['children']:
+                merge_subtree_consecutive_tweets(child_info, merged_tweets, merged_tweet_ids)
+
+    return merged_tweets, merged_tweet_ids
+
+def merge_subtree_consecutive_tweets(subtree_root_info, merged_tweets, merged_tweet_ids):
     current_user_id = None
     current_user_id_str = None
     current_tweet_id = None
     merged_tweet_text = ""
 
-    # Iterate over the tweets in the tree data
-    for tweet_key, tweet_info in tree_data.items():
-        tweet_data = tweet_info['data']
-        user_id = str(tweet_data['user']['id'])  # Convert user ID to string
-        user_id_str = tweet_data['user']['id_str']
-        tweet_id = tweet_data['id_str']
-        text = tweet_data['text']
+    # Traverse the subtree
+    for child_id, child_info in subtree_root_info.items():
+        # Check if the child has 'data' field
+        if 'data' in child_info:
+            tweet_data = child_info['data']
+            user_id = str(tweet_data['user']['id'])  # Convert user ID to string
+            user_id_str = tweet_data['user']['id_str']
+            tweet_id = tweet_data['id_str']
+            text = tweet_data['text']
 
-        # Check if this tweet has the same user ID and user ID string as the previous one
-        if user_id == current_user_id and user_id_str == current_user_id_str:
-            # Append the text of this tweet to the merged text
-            merged_tweet_text += " " + text
+            # Check if this tweet has the same user ID and user ID string as the previous one
+            if user_id == current_user_id and user_id_str == current_user_id_str:
+                # Append the text of this tweet to the merged text
+                merged_tweet_text += " " + text
+            else:
+                # If merged tweet text is not empty, create a merged tweet
+                if merged_tweet_text:
+                    merged_tweets[current_user_id] = {
+                        'id_str': current_tweet_id,
+                        'text': merged_tweet_text.strip()
+                    }
+                    merged_tweet_ids.add(current_tweet_id)
 
-            # Update the tweet ID to the latest one
-            current_tweet_id = tweet_id
-        else:
-            # If merged tweet text is not empty, create a merged tweet
-            if merged_tweet_text:
-                merged_tweets[current_user_id] = {
-                    'id_str': current_tweet_id,
-                    'text': merged_tweet_text.strip()
-                }
-
-            # Reset merged tweet text and current tweet ID for the new user ID
-            merged_tweet_text = text
-            current_user_id = user_id
-            current_user_id_str = user_id_str
-            current_tweet_id = tweet_id
+                # Reset merged tweet text and current tweet ID for the new user ID
+                merged_tweet_text = text
+                current_user_id = user_id
+                current_user_id_str = user_id_str
+                current_tweet_id = tweet_id
 
     # Handle the last merged tweet if any
     if merged_tweet_text:
@@ -119,41 +55,45 @@ def merge_consecutive_tweets(tree_data):
             'id_str': current_tweet_id,
             'text': merged_tweet_text.strip()
         }
-
-    return merged_tweets
+        merged_tweet_ids.add(current_tweet_id)
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
-db = client['DBL_test']
-collection = db['airline_test']
+db = client['DBL2']
+collection = db['airline_trees2']
 
-# Fetch the first document from the collection
-document = collection.find_one({})
+# Fetch the documents from the collection
+documents = collection.find({})
 
-# Check if a document is found
-if document:
-    # Extract tree data from the document
-    tree_data = document.get('tree_data', {})
+# Check if documents are found
+if documents:
+    # Initialize list to store merged trees
+    merged_trees = []
 
-    # Merge consecutive tweets with the same user ID and user ID string
-    merged_tweets = merge_consecutive_tweets(tree_data)
+    # Iterate over the documents
+    for document in documents:
+        # Extract tree data from the document
+        tree_data = document.get('tree_data', {})
 
-    # Convert the dictionary keys to strings
-    merged_tweets_str_keys = {str(k): v for k, v in merged_tweets.items()}
+        # Merge consecutive tweets with the same user ID and user ID string
+        merged_tweets, merged_tweet_ids = merge_consecutive_tweets(tree_data)
 
-    # Print the merged tweets
-    for user_id, tweet_info in merged_tweets_str_keys.items():
-        print("User ID:", user_id)
-        print("Merged Tweet Text:", tweet_info['text'])
+        # Add a field 'merged' to the merged tweets
+        for user_id, tweet_info in merged_tweets.items():
+            tweet_info['merged'] = True
 
-        # Print the full merged tweet
-        print("Full Merged Tweet:", tweet_info)
+        # Add the merged tree to the list
+        merged_trees.append(tree_data)
 
-    # Store the merged tweets in a new collection in MongoDB
-    merged_collection = db['merged_tweets']
-    merged_collection.insert_one(merged_tweets_str_keys)
+    # Store the merged trees in the new collection in MongoDB
+    merged_collection = db['merged_trees']
+    merged_collection.insert_many(merged_trees)
+
 else:
-    print("No document found in the collection.")
+    print("No documents found in the collection.")
+
+
+
 
 
 
