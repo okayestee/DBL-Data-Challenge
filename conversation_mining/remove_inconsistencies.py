@@ -54,10 +54,10 @@ from pymongo import MongoClient, IndexModel, ASCENDING, errors
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
-def remove_inconsistencies():
-    def connect_to_db():
+def remove_inconsistencies(db_name):
+    def connect_to_db(db):
         client = MongoClient('mongodb://localhost:27017/')
-        db = client.DBL2
+        db = client[db_name]
         return db
 
     def create_indexes(collection):
@@ -116,10 +116,10 @@ def remove_inconsistencies():
     max_documents = 4413045
     num_workers = 4 # Number of threads capped at 32 or 2x the number of CPU cores
 
-    db = connect_to_db()
+    db = connect_to_db(db_name)
     filter_and_store_consistent_data(db, max_documents, num_workers)
     create_indexes(db.no_inconsistency)
 
-remove_inconsistencies()
+
 
 
