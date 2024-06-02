@@ -4,7 +4,7 @@ from treelib import Node, Tree
 #full filters including the building fo the trees
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
-db = client['DBL_test']
+db = client.dbl_test
 
 # Define collection names for root documents and replies
 root_collection_name = 'root'
