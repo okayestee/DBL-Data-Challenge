@@ -61,7 +61,7 @@ def process_batch(batch, pbar):
     pbar.update(len(batch))
 
 # Thread worker function
-def worker(pbar):
+def worker(queue, pbar):
     while True:
         batch = queue.get()
         if batch is None:
@@ -75,32 +75,32 @@ queue = Queue()
 threads = []
 num_threads = 4
 
-# Start threads for storing trees
-with tqdm(total=user_convo_starters.count_documents({}), desc="Storing trees") as pbar:
-    for _ in range(num_threads):
-        thread = threading.Thread(target=worker, args=(pbar,))
-        thread.start()
-        threads.append(thread)
-    
-    # Main loop to process tweets in batches
-    batch_size = 10000
-    total_tweets = user_convo_starters.count_documents({})
-    
-    with tqdm(total=total_tweets, desc="Fetching and Processing tweets") as pbar:
-        for i in range(0, total_tweets, batch_size):
-            batch = list(user_convo_starters.find().skip(i).limit(batch_size))
-            queue.put(batch)
-            pbar.update(len(batch))
-        
-        # Add None to the queue for each thread to signal them to exit
-        for _ in range(num_threads):
-            queue.put(None)
+# Main loop to process tweets in batches
+batch_size = 10000
+total_tweets = user_convo_starters.count_documents({})
 
-        # Wait for the queue to be fully processed
-        queue.join()
-    
-    # Wait for all threads to finish
-    for thread in threads:
-        thread.join()
+# Start threads for processing
+for _ in range(num_threads):
+    thread = threading.Thread(target=worker, args=(queue, tqdm(total=total_tweets, desc="Storing trees", leave=False)))
+    thread.start()
+    threads.append(thread)
+
+# Process batches of tweets
+with tqdm(total=total_tweets, desc="Fetching and Processing tweets") as pbar:
+    for i in range(0, total_tweets, batch_size):
+        batch = list(user_convo_starters.find().skip(i).limit(batch_size))
+        queue.put(batch)
+        pbar.update(len(batch))
+
+    # Add None to the queue for each thread to signal them to exit
+    for _ in range(num_threads):
+        queue.put(None)
+
+    # Wait for the queue to be fully processed
+    queue.join()
+
+# Wait for all threads to finish
+for thread in threads:
+    thread.join()
 
 print("Processing complete.")
