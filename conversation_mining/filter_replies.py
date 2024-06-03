@@ -10,7 +10,7 @@ def filter_replies():
         # Select the database
         db = client['AirplaneMode']
         # Select the collections
-        removed_duplicates_collection = db['no_inconsistency']
+        removed_duplicates_collection = db['no_inconsistency'] #cleaned data
         return db, removed_duplicates_collection
 
     def create_indexes(collection):
