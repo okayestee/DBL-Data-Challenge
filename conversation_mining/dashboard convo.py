@@ -12,8 +12,10 @@ def main():
     runpy.run_path("tweet_order.py") #make sure you referene to the airline_trees collection
 
 '''
-after you ran the code above, uncomment the code below and
+after you ran the code above, uncomment the code below 
+and comment out the code above
 make sure you now reference to the user_trees collection
+run the code
 '''
 #def main():
    # runpy.run_path("timeframe.py")
