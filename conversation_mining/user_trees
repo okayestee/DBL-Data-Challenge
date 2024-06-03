@@ -1,183 +1,63 @@
-# import pymongo
-# from pymongo import MongoClient, ASCENDING
-# from tqdm import tqdm
-# import threading
-# from queue import Queue
-# from treelib import Tree
-
-# # Connect to MongoDB
-# client = MongoClient("mongodb://localhost:27017/")
-# db = client.AirplaneMode
-# user_convo_starters = db.user_convo_starters
-# replies = db.replies
-# user_trees = db.user_trees_Demo
-
-# # Create indexes to speed up the search
-# user_convo_starters.create_index([("id_str", ASCENDING)])
-# replies.create_index([("in_reply_to_status_id_str", ASCENDING)])
-
-# # Function to build tree using treelib
-# def build_tree(tweet):
-#     tree = Tree()
-#     tree.create_node(tweet['id_str'], tweet['id_str'], data=tweet)
-    
-#     # Remove the _id field from the tweet object
-#     tweet.pop('_id', None)
-    
-#     def add_children(parent_node):
-#         children = replies.find({"in_reply_to_status_id_str": parent_node.identifier})
-#         for child in children:
-#             child_id = child['id_str']
-#             # Remove the _id field from the child object
-#             child.pop('_id', None)
-#             child_node = tree.create_node(child_id, child_id, parent=parent_node.identifier, data=child)
-#             add_children(child_node)  # Recursively add children for the current child node
-    
-#     add_children(tree.get_node(tweet['id_str']))
-    
-#     # Return the tree
-#     return tree
-
-# # Function to flatten the tree structure
-# def flatten_tree(tree):
-#     tree_dict = tree.to_dict(with_data=True)
-#     flattened_tree = list(tree_dict.values())[0]
-    
-#     # Recursively flatten child nodes
-#     def flatten_children(node):
-#         children = node.get('children', [])
-#         if children:
-#             node['children'] = [flatten_children(child) for child in children]
-#         return node
-    
-#     flattened_tree = flatten_children(flattened_tree)
-#     return flattened_tree
-
-# # Function to process a batch of tweets
-# def process_batch(batch, pbar_store):
-#     for tweet in batch:
-#         tree = build_tree(tweet)
-#         if len(tree.nodes) > 1:
-#             flattened_tree = flatten_tree(tree)
-#             user_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": flattened_tree})
-#             pbar_store.update(1)
-
-# # Thread worker function
-# def worker(pbar_store):
-#     while True:
-#         batch = queue.get()
-#         if batch is None:
-#             queue.task_done()
-#             break
-#         process_batch(batch, pbar_store)
-#         queue.task_done()
-
-# # Initialize queue and threading
-# queue = Queue()
-# threads = []
-# num_threads = 4
-
-# # Get the total number of tweets to process
-# total_tweets = user_convo_starters.count_documents({})
-
-# # Progress bar for storing trees
-# with tqdm(total=total_tweets, desc="Storing trees") as pbar_store:
-#     for i in range(num_threads):
-#         thread = threading.Thread(target=worker, args=(pbar_store,))
-#         thread.start()
-#         threads.append(thread)
-
-#     # Main loop to process tweets in batches
-#     batch_size = 10000
-#     num_batches = (total_tweets + batch_size - 1) // batch_size  # Calculate number of batches needed
-
-#     with tqdm(total=total_tweets, desc="Processing tweets") as pbar_process:
-#         for i in range(num_batches):
-#             batch = list(user_convo_starters.find().skip(i * batch_size).limit(batch_size))
-#             queue.put(batch)
-#             pbar_process.update(len(batch))
-        
-#         queue.join()
-
-#     # Stop workers
-#     for i in range(num_threads):
-#         queue.put(None)
-#     for thread in threads:
-#         thread.join()
-
-# print("Processing complete.")
 import pymongo
 from pymongo import MongoClient, ASCENDING
 from tqdm import tqdm
 import threading
 from queue import Queue
-from treelib import Tree
 
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
 db = client.AirplaneMode
-user_convo_starters = db.user_convo_starters
+airline_convo_starters = db.airline_convo_starters
 replies = db.replies
-user_trees = db.user_trees_Demo
+airline_trees = db.airline_trees
 
 # Create indexes to speed up the search
-user_convo_starters.create_index([("id_str", ASCENDING)])
+airline_convo_starters.create_index([("id_str", ASCENDING)])
 replies.create_index([("in_reply_to_status_id_str", ASCENDING)])
 
-# Function to build tree using treelib
+# Function to build tree
 def build_tree(tweet):
-    tree = Tree()
-    tree.create_node(tweet['id_str'], tweet['id_str'], data=tweet)
+    # Initialize tree node with data
+    tree = {"id_str": tweet['id_str'], "data": tweet, "children": []}
     
     # Remove the _id field from the tweet object
     tweet.pop('_id', None)
     
-    def add_children(parent_node):
-        children = replies.find({"in_reply_to_status_id_str": parent_node.identifier})
+    # Recursive function to add children nodes
+    def add_children(node):
+        # Find replies for the current node
+        children = replies.find({"in_reply_to_status_id_str": node["id_str"]})
         for child in children:
-            child_id = child['id_str']
             # Remove the _id field from the child object
             child.pop('_id', None)
-            child_node = tree.create_node(child_id, child_id, parent=parent_node.identifier, data=child)
-            add_children(child_node)  # Recursively add children for the current child node
+            # Create child node with its children recursively
+            child_node = {"id_str": child['id_str'], "data": child, "children": []}
+            child_node["children"] = add_children(child_node)  # Recursively add children
+            # Append child node to current node's children list
+            node["children"].append(child_node)
+        return node["children"]
     
-    add_children(tree.get_node(tweet['id_str']))
+    # Add children to the root node
+    tree["children"] = add_children(tree)
     
-    # Return the tree
+    # Return the constructed tree
     return tree
 
-# Function to flatten the tree structure
-def flatten_tree(tree):
-    tree_dict = tree.to_dict(with_data=True)
-    flattened_tree = list(tree_dict.values())[0]
-    
-    # Recursively flatten child nodes
-    def flatten_children(node):
-        children = node.get('children', [])
-        if children:
-            node['children'] = [flatten_children(child) for child in children]
-        return node
-    
-    flattened_tree = flatten_children(flattened_tree)
-    return flattened_tree
-
 # Function to process a batch of tweets
-def process_batch(batch, pbar_store):
+def process_batch(batch):
     for tweet in batch:
         tree = build_tree(tweet)
-        if len(tree.nodes) > 1:
-            flattened_tree = flatten_tree(tree)
-            user_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": flattened_tree})
-            pbar_store.update(1)
+        if tree["children"]:
+            airline_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": tree})
 
 # Thread worker function
-def worker(pbar_store):
+def worker():
     while True:
         batch = queue.get()
         if batch is None:
             queue.task_done()
             break
-        process_batch(batch, pbar_store)
+        process_batch(batch)
         queue.task_done()
 
 # Initialize queue and threading
@@ -185,32 +65,27 @@ queue = Queue()
 threads = []
 num_threads = 4
 
-# Get the total number of tweets to process, limited to 250,000
-total_tweets = min(user_convo_starters.count_documents({}), 250000)
+for i in range(num_threads):
+    thread = threading.Thread(target=worker)
+    thread.start()
+    threads.append(thread)
 
-# Progress bar for storing trees
-with tqdm(total=total_tweets, desc="Storing trees") as pbar_store:
-    for i in range(num_threads):
-        thread = threading.Thread(target=worker, args=(pbar_store,))
-        thread.start()
-        threads.append(thread)
+# Main loop to process tweets in batches
+batch_size = 10000
+total_tweets = airline_convo_starters.count_documents({})
 
-    # Main loop to process tweets in batches
-    batch_size = 10000
-    num_batches = (total_tweets + batch_size - 1) // batch_size  # Calculate number of batches needed
+with tqdm(total=total_tweets, desc="Processing tweets") as pbar:
+    for i in range(0, total_tweets, batch_size):
+        batch = list(airline_convo_starters.find().skip(i).limit(batch_size))
+        queue.put(batch)
+        pbar.update(len(batch))
+    
+    queue.join()
 
-    with tqdm(total=total_tweets, desc="Processing tweets") as pbar_process:
-        for i in range(num_batches):
-            batch = list(user_convo_starters.find().skip(i * batch_size).limit(batch_size))
-            queue.put(batch)
-            pbar_process.update(len(batch))
-        
-        queue.join()
-
-    # Stop workers
-    for i in range(num_threads):
-        queue.put(None)
-    for thread in threads:
-        thread.join()
+# Stop workers
+for i in range(num_threads):
+    queue.put(None)
+for thread in threads:
+    thread.join()
 
 print("Processing complete.")
