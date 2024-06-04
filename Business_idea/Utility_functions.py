@@ -1,6 +1,7 @@
 import pymongo
 import re
 import gc
+from bertopic import BERTopic
 
 def get_full_text(tweet):
     if tweet.get('truncated', True):
@@ -52,7 +53,7 @@ def get_random_tweet(batch_size):
     #connect
     client = pymongo.MongoClient("mongodb://localhost:27017/")
     db = client.Airline_data
-    collection = db.no_inconsistency
+    collection = db.topic_analysis
 
     #pipeline 
     pipeline = [
@@ -75,3 +76,15 @@ def add_to_document(doc_id, new_field: str, new_value, new_collection):
         {"_id": ObjectId(str(doc_id))},
         {"$set": {new_field: new_value}}
         )
+
+def get_real_label(label: str, topic_labels: list):
+    
+    return topic_labels[(topic_labels.index(label) + 1) % len(topic_labels)] 
+
+
+def filter_tweets_by_mention(collection, user_handle):
+    mentions = []
+    for tweet in collection.find():
+        if user_handle in tweet.get('text', ''):
+            mentions.append(tweet)
+    return mentions
