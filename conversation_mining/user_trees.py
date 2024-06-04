@@ -54,10 +54,7 @@ def process_batch(batch, pbar):
         if tree["children"]:
             trees.append({"tree_id": tweet['id_str'], "tree_data": tree})
     if trees:
-        try:
-            user_trees.insert_many(trees)
-        except pymongo.errors.BulkWriteError as e:
-            print(f"Error inserting trees: {e.details}")
+        user_trees.insert_many(trees)
     pbar.update(len(batch))
 
 # Thread worker function

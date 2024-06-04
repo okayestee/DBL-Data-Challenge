@@ -1,8 +1,6 @@
 from pymongo import MongoClient, ASCENDING
 from tqdm import tqdm
 
-
-
 def filter_replies():
     def connect_to_db():
         # Connect to the MongoDB server
