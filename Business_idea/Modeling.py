@@ -3,8 +3,15 @@ import pymongo
 from Utility_functions import *
 import gc
 from sklearn.feature_extraction.text import CountVectorizer
-from cuml.cluster import HDBSCAN
-from cuml.manifold import UMAP
+from sklearn.pipeline import make_pipeline
+from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+pipe = make_pipeline(
+    TfidfVectorizer(),
+    TruncatedSVD(100)
+)
+
 
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client.Airline_data
@@ -26,9 +33,7 @@ client.close()
 # Process and collect all tweets in batches
 
 vectorizer_model = CountVectorizer(stop_words="english")
-umap_model = UMAP(n_components=5, n_neighbors=15, min_dist=0.0)1
 topic_model = BERTopic(language='english', min_topic_size= 200, n_gram_range= (1, 2), top_n_words= 10, zeroshot_min_similarity= 0.7,vectorizer_model=vectorizer_model)
-
 # Fit the model on the combined preprocessed tweets
 topics, probs = topic_model.fit_transform(preprocessed_tweets)
 

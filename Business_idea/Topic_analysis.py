@@ -3,7 +3,8 @@ from Utility_functions import *
 from bertopic import BERTopic
 from tqdm import tqdm
 
-topic_model = BERTopic.load("random_bertopic_model")
+
+topic_model = BERTopic.load("merged_model")
 
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client.Airline_data
