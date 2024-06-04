@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['AirplaneMode']
-collection = db['no_inconsistency']
+collection = db['no_inconsistency'] #cleaned data
 starting_tweets_collection = db['starting_tweets']
 
 # Create an index on the in_reply_to_status_id field

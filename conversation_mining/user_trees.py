@@ -7,13 +7,16 @@ from queue import Queue
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
 db = client.AirplaneMode
-airline_convo_starters = db.airline_convo_starters
+user_convo_starters = db.user_convo_starters
 replies = db.replies
-airline_trees = db.airline_trees
+user_trees = db.user_trees
 
 # Create indexes to speed up the search
-airline_convo_starters.create_index([("id_str", ASCENDING)])
+user_convo_starters.create_index([("id_str", ASCENDING)])
 replies.create_index([("in_reply_to_status_id_str", ASCENDING)])
+
+# Clear the user_trees collection before starting
+user_trees.delete_many({})
 
 # Function to build tree
 def build_tree(tweet):
@@ -44,20 +47,27 @@ def build_tree(tweet):
     return tree
 
 # Function to process a batch of tweets
-def process_batch(batch):
+def process_batch(batch, pbar):
+    trees = []
     for tweet in batch:
         tree = build_tree(tweet)
         if tree["children"]:
-            airline_trees.insert_one({"tree_id": tweet['id_str'], "tree_data": tree})
+            trees.append({"tree_id": tweet['id_str'], "tree_data": tree})
+    if trees:
+        try:
+            user_trees.insert_many(trees)
+        except pymongo.errors.BulkWriteError as e:
+            print(f"Error inserting trees: {e.details}")
+    pbar.update(len(batch))
 
 # Thread worker function
-def worker():
+def worker(queue, pbar):
     while True:
         batch = queue.get()
         if batch is None:
             queue.task_done()
             break
-        process_batch(batch)
+        process_batch(batch, pbar)
         queue.task_done()
 
 # Initialize queue and threading
@@ -65,26 +75,31 @@ queue = Queue()
 threads = []
 num_threads = 4
 
-for i in range(num_threads):
-    thread = threading.Thread(target=worker)
+# Main loop to process tweets in batches
+batch_size = 10000
+total_tweets = user_convo_starters.count_documents({})
+
+# Start threads for processing
+for _ in range(num_threads):
+    thread = threading.Thread(target=worker, args=(queue, tqdm(total=total_tweets, desc="Storing trees", leave=False)))
     thread.start()
     threads.append(thread)
 
-# Main loop to process tweets in batches
-batch_size = 10000
-total_tweets = airline_convo_starters.count_documents({})
-
-with tqdm(total=total_tweets, desc="Processing tweets") as pbar:
+# Process batches of tweets
+with tqdm(total=total_tweets, desc="Fetching and Processing tweets") as pbar:
     for i in range(0, total_tweets, batch_size):
-        batch = list(airline_convo_starters.find().skip(i).limit(batch_size))
+        batch = list(user_convo_starters.find().skip(i).limit(batch_size))
         queue.put(batch)
         pbar.update(len(batch))
-    
+
+    # Add None to the queue for each thread to signal them to exit
+    for _ in range(num_threads):
+        queue.put(None)
+
+    # Wait for the queue to be fully processed
     queue.join()
 
-# Stop workers
-for i in range(num_threads):
-    queue.put(None)
+# Wait for all threads to finish
 for thread in threads:
     thread.join()
 
