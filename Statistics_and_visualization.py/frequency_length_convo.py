@@ -52,7 +52,7 @@ if conversation_lengths_counter:
         print(f"Length {length}: {count} times")
 
     # Create a histogram plot
-    plt.bar(conversation_lengths_counter.keys(), conversation_lengths_counter.values(), color='orange')
+    plt.bar(list(conversation_lengths_counter.keys()), list(conversation_lengths_counter.values()), color='orange')
     plt.xlabel('Conversation Length (number of nodes)')
     plt.ylabel('Frequency')
     plt.title('Distribution of Conversation Lengths')
