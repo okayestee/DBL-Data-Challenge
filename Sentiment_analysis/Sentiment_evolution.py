@@ -1,10 +1,11 @@
 import pymongo
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import Random_sample as rs
+
 
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client['DBL_data']
-collection = db['User_convos']
 
-user_trees = list(collection.find({}))
 
 def get_full_text(tweet):
     if tweet.get('truncated', True):
@@ -35,7 +36,7 @@ def get_reply_by_index(tree: dict, reply_index: int):
     return reply
 
     
-def get_convo(tree_doc: dict):
+def get_convo(tree_doc: dict) -> list[str]:
 
     original_tweet = tree_doc['tree_data']
     original_tweet_text = get_full_text(original_tweet['data'])
@@ -51,9 +52,30 @@ def get_convo(tree_doc: dict):
     if len(convo) >= 3:
         return convo
     else:
-        return None
+        return list()
+
+
+analyzer = SentimentIntensityAnalyzer()
+analyzer = rs.update_VADER(analyzer)
+
+collection = db['User_convos']
+
+user_trees = list(collection.find({}))
+
+def extract_compound_from_convo(tree) -> list[int]:
+    conversation = get_convo(tree)
+    convo_sentiments = list()
+
+    for tweet in conversation:
+        text = str(tweet)
+        sentiment_score = analyzer.polarity_scores(text)['compound']
+        convo_sentiments.append(sentiment_score)
+
+    return convo_sentiments
 
 for tree in user_trees:
-    print(get_convo(tree))
+    compound_scores = extract_compound_from_convo(tree)
+    user_compound_scores = compound_scores[0::2]
+    print(f'Full: {compound_scores} \n User: {user_compound_scores}')
 
 
