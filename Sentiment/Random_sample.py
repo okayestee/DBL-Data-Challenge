@@ -97,27 +97,3 @@ def update_VADER(analyzer: SentimentIntensityAnalyzer):
     analyzer.lexicon['terminal'] = 0.03
 
     return analyzer
-
-#sample = select_random_lines(500, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
-#save_sample(sample, 'Sentiment analysis/sample')
-
-
-
-# analyzer = SentimentIntensityAnalyzer()
-
-# analyzer = update_VADER(analyzer)
-
-# text = "@JepBurton Hello. We are very sorry to hear it from you and deeply apologize any inconvenience caused. Please direct message us with your booking reference if you wish us to create formal complaints on behalf of you via this channel. Thank you."
-# text = "Don't worry, we have located your baggage here"
-# scores = analyzer.polarity_scores(text)
-# print(text)
-# print(f'{scores}\n')
-# print(f"{analyzer.lexicon['cancelation']}, {analyzer.lexicon['cancellation']}")
-
-# with open('Sentiment_analysis/sample', 'r', encoding='utf-8') as file:
-#     texts: list[str] = file.readlines()
-
-# for tweet in texts[495:520]:
-#     scores = analyzer.polarity_scores(tweet)
-#     print(tweet)
-#     print(f'{scores}\n')
