@@ -55,8 +55,8 @@ def calculate_all_conversation_durations(collection):
         tree_data = document.get('tree_data')
         if tree_data:
             duration = get_conversation_duration(tree_data)
-            # Exclude conversations that exceed 24 hours and round the duration to the nearest hour
-            if 0 <= duration <= 24:
+            # Include only conversations within 72 hours
+            if 0 <= duration <= 50:
                 rounded_duration = round_duration_to_nearest_hour(duration)
                 conversation_durations_counter[rounded_duration] += 1
     return conversation_durations_counter
@@ -70,10 +70,9 @@ if conversation_durations_counter:
         print(f"{duration} hours: {count} times")
 
     # Create a histogram plot
-    # Create a histogram plot
-plt.bar(list(conversation_durations_counter.keys()), list(conversation_durations_counter.values()), color='skyblue')
-plt.xlabel('Rounded Conversation Duration (hours)')
-plt.ylabel('Frequency')
-plt.title('Distribution of Conversation Durations (Rounded)')
-plt.grid(True)
-plt.show()
+    plt.bar(list(conversation_durations_counter.keys()), list(conversation_durations_counter.values()), color='skyblue')
+    plt.xlabel('Rounded Conversation Duration (hours)')
+    plt.ylabel('Frequency')
+    plt.title('Distribution of Conversation Durations (Rounded)')
+    plt.grid(True)
+    plt.show()
