@@ -4,7 +4,7 @@ import pymongo
 import json
 from conversation_mining import remove_duplicates
 
-def make_collection(path, db)
+def make_collection(path, db):
     client = pymongo.MongoClient("mongodb://localhost:27017/")
     db = client[db]
     collection = db['cleaned_data']

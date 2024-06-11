@@ -117,3 +117,21 @@ def clean_all_files(path: str) -> None:
                     new_file.write(json.dumps(remove_variables(line)) + '\n')
 
     print(f"All files cleaned and inserted into {path}/cleaned_data.json")
+
+def check_media(tweet: dict) -> bool:
+    """
+    Checks whether a tweet or any tweets that are inside the tweet contain any media elements
+    :param tweet: the tweet to be checked
+    :returns: a boolean value representing whether the tweet has any media content
+    """
+    # Check the main tweet
+    if 'media' in tweet:
+        return True
+
+    # Check all tweets inside the tweet
+    for key in tweet:
+        if type(tweet[key]) == dict:
+            if check_media(tweet[key]):
+                return True
+
+    return False
