@@ -98,5 +98,7 @@ def update_VADER(analyzer: SentimentIntensityAnalyzer):
 
     return analyzer
 
-sample = select_random_lines(500, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
-save_sample(sample, 'Sentiment analysis/sample')
+# To get a random sample from the cleaned data text file, fill in the relevant paths and run the following code:
+sample = select_random_lines(500, "PATH TO CLEANED DATA FILE", count_lines("PATH TO CLEANED DATA FILE"))
+
+save_sample(sample, 'NEW LOCATION FOR SAMPLE')
