@@ -5,7 +5,7 @@ import VADER_implementation as v_implement
 
 analyzer = v_implement.analyzer
 
-def get_full_text(tweet):
+def get_full_text(tweet) -> str:
     if tweet.get('truncated', True):
         return tweet.get('extended_tweet', {}).get('full_text', '')
     else:
@@ -34,16 +34,16 @@ def get_reply_by_index(tree: dict, reply_index: int):
     return reply
 
     
-def get_convo(tree_doc: dict) -> list[str]:
+def get_convo(tree_doc: dict) -> list:
 
     original_tweet = tree_doc['tree_data']
-    original_tweet_text = get_full_text(original_tweet['data'])
+    original_tweet_text = original_tweet['data']
 
     convo: list = [original_tweet_text]
     next_reply = get_reply_by_index(original_tweet, 0)
 
     while len(next_reply) != 0:
-        convo.append(get_full_text(next_reply['data']))
+        convo.append(next_reply['data'])
         next_reply = get_reply_by_index(next_reply, 0)
     
     if len(convo) >= 3:
@@ -51,13 +51,23 @@ def get_convo(tree_doc: dict) -> list[str]:
     else:
         return list()
 
-def extract_compound_from_convo(tree) -> list[int]:
+def extract_compound_from_convo_VADER(tree) -> list[int]:
     conversation = get_convo(tree)
     convo_sentiments = list()
 
     for tweet in conversation:
-        text = str(tweet)
+        text = get_full_text(tweet)
         sentiment_score = analyzer.polarity_scores(text)['compound']
+        convo_sentiments.append(sentiment_score)
+
+    return convo_sentiments
+
+def extract_compound_from_convo_vars(tree) -> list[int]:
+    conversation = get_convo(tree)
+    convo_sentiments = list()
+
+    for tweet in conversation:
+        sentiment_score = tweet['compound sentiment']
         convo_sentiments.append(sentiment_score)
 
     return convo_sentiments
@@ -153,7 +163,7 @@ def get_evolution_stats(collection, desired_stats= 'all') -> None:
     for tree in trees:
         starting_user_id = tree['tree_data']['data']['user']['id']
         if is_airline_userID(starting_user_id):
-            compound_scores = extract_compound_from_convo(tree)
+            compound_scores = extract_compound_from_convo_VADER(tree) # CHANGE THIS TO THE extract_compound_from_convo_vars FORM ONCE SENTIMENT VARS HAVE BEEN ADDED
             airline_compound_scores = compound_scores[1::2]
             airline_compounds.append(airline_compound_scores)
             all_compounds.append(airline_compound_scores)
@@ -161,7 +171,7 @@ def get_evolution_stats(collection, desired_stats= 'all') -> None:
             progress_counter += 1
 
         else:
-            compound_scores = extract_compound_from_convo(tree)
+            compound_scores = extract_compound_from_convo_VADER(tree) # ALSO CHANGE THIS ONE LATER LIKE THE ONE ABOVE
             user_compound_scores = compound_scores[0::2]
             user_compounds.append(user_compound_scores)
             all_compounds.append(user_compound_scores)
