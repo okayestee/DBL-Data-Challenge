@@ -97,3 +97,6 @@ def update_VADER(analyzer: SentimentIntensityAnalyzer):
     analyzer.lexicon['terminal'] = 0.03
 
     return analyzer
+
+sample = select_random_lines(500, "Sentiment analysis/../data/cleaned_data.json", 3304585) # Could replace number by count_lines, will increase runtime
+save_sample(sample, 'Sentiment analysis/sample')
