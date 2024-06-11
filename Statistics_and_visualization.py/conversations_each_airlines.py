@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from collections import defaultdict
+import matplotlib.pyplot as plt
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
@@ -62,3 +63,17 @@ airline_conversations_count = count_conversations_for_airlines(valid_trees_colle
 print("Number of conversations for each airline:")
 for airline, count in airline_conversations_count.items():
     print(f"{airline}: {count}")
+
+# Data for visualization
+airlines = list(airline_conversations_count.keys())
+counts = list(airline_conversations_count.values())
+
+# Create a vertical bar chart
+plt.figure(figsize=(12, 8))
+plt.bar(airlines, counts, color='skyblue')
+plt.xlabel('Airlines')
+plt.ylabel('Number of Conversations')
+plt.title('Number of Conversations for each airline')
+plt.xticks(rotation=45, ha='right')  # Rotate the x-axis labels for better readability
+plt.tight_layout()  # Adjust layout to prevent clipping of labels
+plt.show()
