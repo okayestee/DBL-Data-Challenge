@@ -73,7 +73,8 @@ plt.figure(figsize=(12, 8))
 plt.bar(airlines, counts, color='skyblue')
 plt.xlabel('Airlines')
 plt.ylabel('Number of Conversations')
-plt.title('Number of Conversations for each airline')
+plt.title('Number of Conversations for Each Airline')
 plt.xticks(rotation=45, ha='right')  # Rotate the x-axis labels for better readability
+plt.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
 plt.tight_layout()  # Adjust layout to prevent clipping of labels
 plt.show()
