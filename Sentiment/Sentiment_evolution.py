@@ -2,11 +2,12 @@ from click import progressbar
 from numpy import append, mean
 import pymongo
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import Random_sample as rs
+import VADER_implementation as v_implement
 
 
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client['DBL_data']
+
 
 
 def get_full_text(tweet):
@@ -138,7 +139,7 @@ def count_evolution_types(list_of_compounds) -> str:
 
 
 analyzer = SentimentIntensityAnalyzer()
-analyzer = rs.update_VADER(analyzer)
+analyzer = v_implement.update_VADER(analyzer)
 
 all_compounds: list[list[int]] = list()
 airline_compounds: list[list[int]] = list()
