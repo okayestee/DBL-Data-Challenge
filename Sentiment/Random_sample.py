@@ -97,3 +97,8 @@ def update_VADER(analyzer: SentimentIntensityAnalyzer):
     analyzer.lexicon['terminal'] = 0.03
 
     return analyzer
+
+# To get a random sample from the cleaned data text file, fill in the relevant paths and run the following code:
+sample = select_random_lines(500, "PATH TO CLEANED DATA FILE", count_lines("PATH TO CLEANED DATA FILE"))
+
+save_sample(sample, 'NEW LOCATION FOR SAMPLE')
