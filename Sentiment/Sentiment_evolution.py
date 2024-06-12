@@ -228,3 +228,23 @@ def plot_evos(evolutions: dict[str, int], include_non_evos: bool = False):
     plt.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
     plt.show()
+
+def get_increasing_decreasing_stats(evolutions: dict) -> dict:
+
+    inc_dec_stats = dict()
+    
+    inc_dec_stats['amount_increasing'] = evolutions['neg_to_neu'] + evolutions['neg_to_pos'] + evolutions['neu_to_pos']
+    inc_dec_stats['amount_decreasing'] = evolutions['neu_to_neg'] + evolutions['pos_to_neu'] + evolutions['pos_to_neg']
+
+    total_amount = 0
+    for key in evolutions:
+        total_amount += evolutions[key]
+    
+    total_evolutions = inc_dec_stats['amount_increasing'] + inc_dec_stats['amount_decreasing']
+    
+    inc_dec_stats['perc. increasing (all conversations)'] = round((inc_dec_stats['amount_increasing'] / total_amount) * 100, 2)
+    inc_dec_stats['perc. decreasing (all conversations)'] = round((inc_dec_stats['amount_decreasing'] / total_amount) * 100, 2)
+    inc_dec_stats['perc. increasing (only evolutions)'] = round((inc_dec_stats['amount_increasing'] / total_evolutions) * 100, 2)
+    inc_dec_stats['perc. decreasing (only evolutions)'] = round((inc_dec_stats['amount_decreasing'] / total_evolutions) * 100, 2)
+
+    return inc_dec_stats

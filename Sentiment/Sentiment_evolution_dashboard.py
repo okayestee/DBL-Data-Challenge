@@ -14,5 +14,8 @@ evolution_statistics = senti_evo.get_evolution_stats(collection)
 # Print the exact counts in the terminal
 print(evolution_statistics)
 
+# Print the distribution of increasing and decreasing evolutions
+print(senti_evo.get_increasing_decreasing_stats(evolution_statistics))
+
 # Create a bar chart of the evolutions
 senti_evo.plot_evos(evolution_statistics)
