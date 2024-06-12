@@ -1,5 +1,6 @@
 import os
 import json
+from tqdm import tqdm
 
 
 def make_tweet_list(path: str)-> list[dict]: 
@@ -102,19 +103,16 @@ def clean_all_files(path: str) -> None:
     '''
 
     file_path_list = file_paths_list(path)
-    progress_counter = 0
 
+    with tqdm(total=len(file_path_list), desc="Data cleaning", unit="documents") as pbar
     with open(f'{path}/cleaned_data.json', 'a', encoding='latin-1') as new_file:
         for file_path in file_path_list:
-            # Keep track of how many files have been processed
-            progress_counter += 1
-            print(str(progress_counter) + '/' + str(len(file_path_list)))
-
             # For each line/tweet in the file, check if it should be included and write it into the cleaned data.
             lines: list = make_tweet_list(file_path)
             for line in lines:
                 if check_language(line):
                     new_file.write(json.dumps(remove_variables(line)) + '\n')
+            pbar.update(1)
 
     print(f"All files cleaned and inserted into {path}/cleaned_data.json")
 
