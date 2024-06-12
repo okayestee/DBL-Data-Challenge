@@ -60,40 +60,8 @@ def save_sample(sample, file_name) -> None:
             counter += 1
             new_file.write(f'Tweet {counter}: {str(content)} \n')
 
-def update_VADER(analyzer: SentimentIntensityAnalyzer):
-    analyzer.lexicon['help'] = 0
-    analyzer.lexicon['cancellation'] = -2.29
-    analyzer.lexicon['cancelled'] = analyzer.lexicon['cancellation']
-    analyzer.lexicon['canceled'] = analyzer.lexicon['cancellation']
-    analyzer.lexicon['cancels'] = analyzer.lexicon['cancellation']
-    analyzer.lexicon['cancelation'] = analyzer.lexicon['cancellation']
-    analyzer.lexicon['cancelations'] = analyzer.lexicon['cancellation']
-    analyzer.lexicon['cancellations'] = analyzer.lexicon['cancellation']
-    analyzer.lexicon['long'] = -1.06
-    analyzer.lexicon['transfer'] = 0.13
-    analyzer.lexicon['transferred'] = analyzer.lexicon['transfer']
-    analyzer.lexicon['nonstop'] = 0.06
-    analyzer.lexicon['non-stop'] = analyzer.lexicon['nonstop']
-    analyzer.lexicon['non stop'] = analyzer.lexicon['non-stop']
-    analyzer.lexicon['direct'] = 0.45
-    analyzer.lexicon['directly'] = analyzer.lexicon['direct']
-    analyzer.lexicon['over-booked'] = -1.91
-    analyzer.lexicon['overbooked'] = analyzer.lexicon['over-booked']
-    analyzer.lexicon['over booked'] = analyzer.lexicon['over-booked']
-    analyzer.lexicon['over books'] = analyzer.lexicon['over-booked']
-    analyzer.lexicon['overbooks'] = analyzer.lexicon['over-booked']
-    analyzer.lexicon['over-books'] = analyzer.lexicon['over-booked']
-    analyzer.lexicon['offload'] = -1.63
-    analyzer.lexicon['offloads'] = analyzer.lexicon['offload']
-    analyzer.lexicon['offloaded'] = analyzer.lexicon['offload']
-    analyzer.lexicon['off-load'] = analyzer.lexicon['offload']
-    analyzer.lexicon['off-loaded'] = analyzer.lexicon['offload']
-    analyzer.lexicon['off-loads'] = analyzer.lexicon['offload']
-    analyzer.lexicon['problem'] = -2.24
-    analyzer.lexicon['problems'] = analyzer.lexicon['problem']
-    analyzer.lexicon['on time'] = 1.69
-    analyzer.lexicon['ontime'] = analyzer.lexicon['on time']
-    analyzer.lexicon['on-time'] = analyzer.lexicon['on time']
-    analyzer.lexicon['terminal'] = 0.03
 
-    return analyzer
+# To get a random sample from the cleaned data text file, fill in the relevant paths and run the following code:
+sample = select_random_lines(500, "PATH TO CLEANED DATA FILE", count_lines("PATH TO CLEANED DATA FILE"))
+
+save_sample(sample, 'NEW LOCATION FOR SAMPLE')

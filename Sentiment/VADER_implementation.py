@@ -1,25 +1,46 @@
-from collections.abc import Collection
 from statistics import mean
 from turtle import pos
-import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import pymongo
 from bson.objectid import ObjectId
-import Random_sample as rs
 
+def update_VADER(analyzer: SentimentIntensityAnalyzer):
+    analyzer.lexicon['help'] = 0
+    analyzer.lexicon['cancellation'] = -2.29
+    analyzer.lexicon['cancelled'] = analyzer.lexicon['cancellation']
+    analyzer.lexicon['canceled'] = analyzer.lexicon['cancellation']
+    analyzer.lexicon['cancels'] = analyzer.lexicon['cancellation']
+    analyzer.lexicon['cancelation'] = analyzer.lexicon['cancellation']
+    analyzer.lexicon['cancelations'] = analyzer.lexicon['cancellation']
+    analyzer.lexicon['cancellations'] = analyzer.lexicon['cancellation']
+    analyzer.lexicon['long'] = -1.06
+    analyzer.lexicon['transfer'] = 0.13
+    analyzer.lexicon['transferred'] = analyzer.lexicon['transfer']
+    analyzer.lexicon['nonstop'] = 0.06
+    analyzer.lexicon['non-stop'] = analyzer.lexicon['nonstop']
+    analyzer.lexicon['non stop'] = analyzer.lexicon['non-stop']
+    analyzer.lexicon['direct'] = 0.45
+    analyzer.lexicon['directly'] = analyzer.lexicon['direct']
+    analyzer.lexicon['over-booked'] = -1.91
+    analyzer.lexicon['overbooked'] = analyzer.lexicon['over-booked']
+    analyzer.lexicon['over booked'] = analyzer.lexicon['over-booked']
+    analyzer.lexicon['over books'] = analyzer.lexicon['over-booked']
+    analyzer.lexicon['overbooks'] = analyzer.lexicon['over-booked']
+    analyzer.lexicon['over-books'] = analyzer.lexicon['over-booked']
+    analyzer.lexicon['offload'] = -1.63
+    analyzer.lexicon['offloads'] = analyzer.lexicon['offload']
+    analyzer.lexicon['offloaded'] = analyzer.lexicon['offload']
+    analyzer.lexicon['off-load'] = analyzer.lexicon['offload']
+    analyzer.lexicon['off-loaded'] = analyzer.lexicon['offload']
+    analyzer.lexicon['off-loads'] = analyzer.lexicon['offload']
+    analyzer.lexicon['problem'] = -2.24
+    analyzer.lexicon['problems'] = analyzer.lexicon['problem']
+    analyzer.lexicon['on time'] = 1.69
+    analyzer.lexicon['ontime'] = analyzer.lexicon['on time']
+    analyzer.lexicon['on-time'] = analyzer.lexicon['on time']
+    analyzer.lexicon['terminal'] = 0.03
 
-# Connect to the database
-client = pymongo.MongoClient("mongodb://localhost:27017/")
-db = client['DBL_data']
-collection = db['no_inconsistency']
+    return analyzer
 
-
-# Initialize VADER Sentiment Analyzer
-analyzer = SentimentIntensityAnalyzer()
-
-analyzer = rs.update_VADER(analyzer)
-
-# Function to run VADER analysis on text
 def analyze_sentiment(text):
     sentiment_score = analyzer.polarity_scores(text)
     return sentiment_score
@@ -41,69 +62,50 @@ def add_to_document(doc_id, new_field: str, new_value, new_collection):
 def add_entire_document(document, new_collection):
         new_collection.insert_one(document)
 
-## Process documents in batches
-batch_size = 10000
-documents_processed = 0
-
-trunc_error_counter = 0
-
-batch_mean_compound: list[float] = []
-
-pos_counter = 0
-neg_counter = 0
-neu_counter = 0
-
-if 'sentiment_analysis' not in db.list_collection_names():
-    new_collection = db.create_collection("sentiment_analysis")
-else:
-    new_collection = db['sentiment_analysis']
 
 
-while True:
-    # Retrieve a batch of documents
-    batch = list(collection.find({}).skip(documents_processed).limit(batch_size))
-    if not batch:
-        print('Sentiment Analysis Finished!')
-        break  # Exit loop if no more documents are retrieved
-    
-    batch_mean_compound.append(0)
+def add_sentiment_variables(database, old_collection, new_collection_name: str) -> None:
 
-    # Analyze sentiment for each document in the batch
-    for document in batch:
-        text = get_full_text(document)
-        sentiment = analyze_sentiment(text)
+    # Process documents in batches
+    batch_size = 10000
+    documents_processed = 0
 
-        add_entire_document(document, new_collection)
+    if new_collection_name not in database.list_collection_names():
+        new_collection = database.create_collection(new_collection_name)
+    else:
+        new_collection = database[new_collection_name]
 
-        if text[-1:] == '…':
-            trunc_error_counter += 1
-            new_collection.update_one(
-            {"_id": ObjectId(document.get('_id'))},
-            {"$set": {'negativity': sentiment['neg'], 'neutrality': sentiment['neu'], 'positivity' : sentiment['pos'], 'compound sentiment' : sentiment['compound'], 'truncated_error' : True}}
-            )
-        else:
-            new_collection.update_one(
-            {"_id": ObjectId(document.get('_id'))},
-            {"$set": {'negativity': sentiment['neg'], 'neutrality': sentiment['neu'], 'positivity' : sentiment['pos'], 'compound sentiment' : sentiment['compound'], 'truncated_error' : False}}
-            )    
 
-        if sentiment['compound'] < 0.2:
-            neg_counter += 1
-        elif sentiment['compound'] > 0.25:
-            pos_counter += 1
-        else:
-            neu_counter += 1
+    while True:
+        # Retrieve a batch of documents
+        batch = list(old_collection.find({}).skip(documents_processed).limit(batch_size))
+        if not batch:
+            print('Sentiment Analysis Finished!')
+            break  # Exit loop if no more documents are retrieved
+        
+        # Analyze sentiment for each document in the batch
+        for document in batch:
+            text = get_full_text(document)
+            sentiment = analyze_sentiment(text)
 
-        batch_mean_compound[(documents_processed // 10000)] += sentiment['compound']
-    
-    batch_mean_compound[(documents_processed // 10000)] /= 10000 # Gets the mean compound score of the batch
+            add_entire_document(document, new_collection)
 
-    # Update the count of processed documents
-    documents_processed += len(batch)
-    print(documents_processed)
+            if text[-1:] == '…':
+                new_collection.update_one(
+                {"_id": ObjectId(document.get('_id'))},
+                {"$set": {'negativity': sentiment['neg'], 'neutrality': sentiment['neu'], 'positivity' : sentiment['pos'], 'compound sentiment' : sentiment['compound'], 'truncated_error' : True}}
+                )
+            else:
+                new_collection.update_one(
+                {"_id": ObjectId(document.get('_id'))},
+                {"$set": {'negativity': sentiment['neg'], 'neutrality': sentiment['neu'], 'positivity' : sentiment['pos'], 'compound sentiment' : sentiment['compound'], 'truncated_error' : False}}
+                )    
+        
+        # Update the count of processed documents
+        documents_processed += len(batch)
+        print(documents_processed)
 
-print(f'truncation errors: {trunc_error_counter}')
-print(f'negatives: {neg_counter}, neutrals: {neu_counter}, positives: {pos_counter}')
+# Get the VADER analyzer
+analyzer = SentimentIntensityAnalyzer()
+analyzer = update_VADER(analyzer)
 
-compound_mean = mean(batch_mean_compound)
-print(f'mean compound score: {compound_mean}')
