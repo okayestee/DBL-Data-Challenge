@@ -104,15 +104,19 @@ def clean_all_files(path: str) -> None:
 
     file_path_list = file_paths_list(path)
 
-    with tqdm(total=len(file_path_list), desc="Data cleaning", unit="documents") as pbar:
-        with open(f'{path}/cleaned_data.json', 'a', encoding='latin-1') as new_file:
+    total_files = len(file_path_list)
+    with open(f'{path}/cleaned_data.json', 'a', encoding='latin-1') as new_file:
+        with tqdm(total=total_files, desc="Data cleaning", unit="documents") as pbar:
             for file_path in file_path_list:
+                
                 # For each line/tweet in the file, check if it should be included and write it into the cleaned data.
                 lines: list = make_tweet_list(file_path)
                 for line in lines:
                     if check_language(line):
                         new_file.write(json.dumps(remove_variables(line)) + '\n')
                 pbar.update(1)
+
+ 
 
     print(f"All files cleaned and inserted into {path}/cleaned_data.json")
 
