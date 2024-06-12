@@ -1,15 +1,17 @@
 from pymongo import MongoClient
 import re
+from tqdm import tqdm
 client = MongoClient("mongodb://localhost:27017/")
 
 db = client['grouping_airlines']
 
-#list of airline collections
+#creates collections for each airline
 
 airlines = [
     "KLM", "AirFrance", "British_Airways", "AmericanAir", "Lufthansa", 
     "AirBerlin", "easyJet", "RyanAir", "SingaporeAir", "Qantas", 
     "EtihadAirways", "VirginAtlantic"]
+
 
 for airline in airlines:
     db.create_collection(airline)
@@ -64,3 +66,55 @@ for document in documents:
             db[target_collection_name].insert_one(document)
 
 print("Documents have been copied to respective collections.")
+
+original_collection = db['user_validtrees']
+
+# Function to find the correct collection name based on text mention
+def find_airline(text):
+    text = text.lower()
+    for alias, collection in airline_mapping.items():
+        if re.search(f"@{alias.lower()}", text, re.IGNORECASE):
+            return collection
+    return None
+
+# Recursive function to traverse and find mentions in the tree structure
+def traverse_tree(node):
+    if isinstance(node, dict):
+        if 'data' in node and 'text' in node['data']:
+            airline = find_airline(node['data']['text'])
+            if airline:
+                return airline
+        for key in node:
+            result = traverse_tree(node[key])
+            if result:
+                return result
+    elif isinstance(node, list):
+        for item in node:
+            result = traverse_tree(item)
+            if result:
+                return result
+    return None
+
+# Fetch all documents from the original collection
+documents = list(original_collection.find())
+
+# Progress bar setup
+total_docs = len(documents)
+processed_docs = 0
+
+# Iterate through each document and move it to the new collection
+for document in tqdm(documents, desc="Processing Documents"):
+    # Traverse the tree_data to find the mentioned airline
+    if 'tree_data' in document:
+        airline = traverse_tree(document['tree_data'])
+        if airline:
+            # Insert the document into the target collection
+            db[airline].insert_one(document)
+            processed_docs += 1
+
+print(f"Total documents: {total_docs}")
+print(f"Documents processed and moved: {processed_docs}")
+if processed_docs < total_docs:
+    print(f"Documents not processed: {total_docs - processed_docs}")
+
+print("Documents have been copied to respective collections based on airline mentions.")
