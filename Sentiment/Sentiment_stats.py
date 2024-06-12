@@ -3,6 +3,9 @@ from statistics import mean
 def get_sentiment_stats(collection) -> dict:
 
     batch_mean_compound: list[float] = []
+    batch_mean_compound_pos: list[float] = []
+    batch_mean_compound_neu: list[float] = []
+    batch_mean_compound_neg: list[float] = []
 
     sentiment_stats: dict[str, float] = dict()
 
@@ -22,6 +25,9 @@ def get_sentiment_stats(collection) -> dict:
             break  # Exit loop if no more documents are retrieved
 
         batch_mean_compound.append(0)
+        batch_mean_compound_pos.append(0)
+        batch_mean_compound_neu.append(0)
+        batch_mean_compound_neg.append(0)
         
         for document in batch:
             if document.get('truncated_error') == True:
@@ -29,21 +35,38 @@ def get_sentiment_stats(collection) -> dict:
 
             compound_score = document.get('compound sentiment')
 
+            neg_counter = 0
+            neu_counter = 0
+            pos_counter = 0
+
             if compound_score < -0.2:
                 sentiment_stats['negative sentiments'] += 1
+                neg_counter += 1
+                batch_mean_compound_neg[(documents_processed // batch_size)] += compound_score
             elif compound_score > 0.25:
                 sentiment_stats['positive sentiments'] += 1
+                pos_counter += 1
+                batch_mean_compound_pos[(documents_processed // batch_size)] += compound_score
             else:
                 sentiment_stats['neutral sentiments'] += 1
+                neu_counter += 1
+                batch_mean_compound_neu[(documents_processed // batch_size)] += compound_score
 
             batch_mean_compound[(documents_processed // batch_size)] += compound_score
             
 
         batch_mean_compound[(documents_processed // batch_size)] /= batch_size # Gets the mean compound score of the batch
 
+        batch_mean_compound_neg[(documents_processed // batch_size)] /= neg_counter
+        batch_mean_compound_neu[(documents_processed // batch_size)] /= neu_counter
+        batch_mean_compound_pos[(documents_processed // batch_size)] /= pos_counter
+
         documents_processed += len(batch)
         print(documents_processed)
 
     sentiment_stats['mean compound'] = mean(batch_mean_compound)
+    sentiment_stats['mean negative compound'] = mean(batch_mean_compound_neg)
+    sentiment_stats['mean neutral compound'] = mean(batch_mean_compound_neu)
+    sentiment_stats['mean positive compound'] = mean(batch_mean_compound_pos)
 
     return sentiment_stats
