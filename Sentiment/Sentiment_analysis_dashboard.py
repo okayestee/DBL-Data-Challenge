@@ -14,3 +14,5 @@ vader_imp.add_sentiment_variables(db, collection, 'Sentiment_included')
 sentiment_stats = senti_stats.get_sentiment_stats(collection)
 
 print(sentiment_stats)
+
+senti_stats.plot_sentiment_stats(sentiment_stats)

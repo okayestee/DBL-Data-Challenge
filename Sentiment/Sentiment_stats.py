@@ -1,3 +1,4 @@
+from math import ceil
 from statistics import mean
 import matplotlib.pyplot as plt
 
@@ -56,9 +57,12 @@ def get_sentiment_stats(collection) -> dict:
 
         batch_mean_compound[(documents_processed // batch_size)] /= batch_size # Gets the mean compound score of the batch
 
-        batch_mean_compound_neg[(documents_processed // batch_size)] /= neg_counter
-        batch_mean_compound_neu[(documents_processed // batch_size)] /= neu_counter
-        batch_mean_compound_pos[(documents_processed // batch_size)] /= pos_counter
+        if neg_counter > 0:
+            batch_mean_compound_neg[(documents_processed // batch_size)] /= neg_counter
+        if neu_counter > 0:
+            batch_mean_compound_neu[(documents_processed // batch_size)] /= neu_counter
+        if pos_counter > 0:
+            batch_mean_compound_pos[(documents_processed // batch_size)] /= pos_counter
 
         documents_processed += len(batch)
         print(documents_processed)
