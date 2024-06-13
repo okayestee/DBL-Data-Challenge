@@ -114,6 +114,7 @@ def visualize_languages(lang_dict: dict) -> None:
     plt.figure(figsize=(8, 8))
     patches, texts, autotexts = plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
     plt.title('Distribution of English vs Non-English Tweets\n'
+              f'Tweets written between: {start_date_str} and {end_date_str}\n'
               f'Total Tweets: {total_tweets}\n'
               f'English: {english_count} ({english_percentage:.1f}%)\n'
               f'Non-English: {non_english_count} ({non_english_percentage:.1f}%)')
