@@ -9,7 +9,10 @@ collection = db['Airline_convos'] ## Choose a collection of conversations
 
 
 # Get the evolution statistics
-evolution_statistics = senti_evo.get_evolution_stats(collection)
+evolution_statistics = senti_evo.get_evolution_stats(senti_evo.get_tree_docs(collection))
+
+# Or get the evolution statistics for a specific topic
+evolution_stats_for_topic = senti_evo.get_evolution_stats(senti_evo.get_tree_docs(collection, 'Baggage'))
 
 # Print the exact counts in the terminal
 print(evolution_statistics)

@@ -1,3 +1,4 @@
+import collections
 from click import progressbar
 from numpy import append, mean
 import VADER_implementation as v_implement
@@ -52,7 +53,7 @@ def get_convo(tree_doc: dict) -> list:
     else:
         return list()
 
-def extract_compound_from_convo_VADER(tree) -> list[int]:
+def extract_compounds_from_convo_VADER(tree) -> list[float]:
     conversation = get_convo(tree)
     convo_sentiments = list()
 
@@ -63,7 +64,7 @@ def extract_compound_from_convo_VADER(tree) -> list[int]:
 
     return convo_sentiments
 
-def extract_compound_from_convo_vars(tree) -> list[int]:
+def extract_compounds_from_convo_vars(tree) -> list[float]:
     conversation = get_convo(tree)
     convo_sentiments = list()
 
@@ -73,14 +74,14 @@ def extract_compound_from_convo_vars(tree) -> list[int]:
 
     return convo_sentiments
 
-def get_evolutions(user_compounds: list[int]) -> list[list[str]]:
+def get_evolutions(compounds: list[int]) -> list[list[str]]:
     
     sentiments = []
     evolutions: list[str] = list()
     non_evolutions: list[str] = list()
 
     # Label the sentiment=
-    for compound in user_compounds:
+    for compound in compounds:
         if compound < -0.2:
             sentiments.append('NEGATIVE')
         elif compound > 0.25:
@@ -151,9 +152,24 @@ def is_airline_userID(user_ID: int) -> bool:
     else:
         return False
 
+    
+def get_tree_docs(collection, topic: str = '') -> list:
 
+    all_tree_docs = list(collection.find({}))
 
-def get_evolution_stats(collection, desired_stats= 'combined') -> dict:
+    # get the convos with the topic
+    tree_docs: list = []
+
+    for tree_doc in all_tree_docs:
+        if topic != '':
+            if tree_doc['tree_data']['data']['topic'] == topic:
+                tree_docs.append(tree_doc)
+        else:
+            tree_docs.append(tree_doc)
+
+    return tree_docs
+
+def get_evolution_stats(tree_docs, desired_stats= 'combined') -> dict:
     """
     Calculates and returns the number of each evolution and non-evolution.
     :param collection: the MongoDB collection with trees that we should get the stats from
@@ -162,18 +178,17 @@ def get_evolution_stats(collection, desired_stats= 'combined') -> dict:
     """
 
 
-    trees = list(collection.find({}))
     progress_counter = 0
-    collection_size = len(trees)
+    collection_size = len(tree_docs)
 
-    all_compounds: list[list[int]] = list()
-    airline_compounds: list[list[int]] = list()
-    user_compounds: list[list[int]] = list()
+    all_compounds: list[list[float]] = list()
+    airline_compounds: list[list[float]] = list()
+    user_compounds: list[list[float]] = list()
     
-    for tree in trees:
+    for tree in tree_docs:
         starting_user_id = tree['tree_data']['data']['user']['id']
         if is_airline_userID(starting_user_id):
-            compound_scores = extract_compound_from_convo_VADER(tree) # CHANGE THIS TO THE extract_compound_from_convo_vars FORM ONCE SENTIMENT VARS HAVE BEEN ADDED
+            compound_scores = extract_compounds_from_convo_VADER(tree) # CHANGE THIS TO THE extract_compound_from_convo_vars FORM ONCE SENTIMENT VARS HAVE BEEN ADDED
             airline_compound_scores = compound_scores[1::2]
             airline_compounds.append(airline_compound_scores)
             all_compounds.append(airline_compound_scores)
@@ -181,7 +196,7 @@ def get_evolution_stats(collection, desired_stats= 'combined') -> dict:
             progress_counter += 1
 
         else:
-            compound_scores = extract_compound_from_convo_VADER(tree) # ALSO CHANGE THIS ONE LATER LIKE THE ONE ABOVE
+            compound_scores = extract_compounds_from_convo_VADER(tree) # ALSO CHANGE THIS ONE LATER LIKE THE ONE ABOVE
             user_compound_scores = compound_scores[0::2]
             user_compounds.append(user_compound_scores)
             all_compounds.append(user_compound_scores)
@@ -248,3 +263,6 @@ def get_increasing_decreasing_stats(evolutions: dict) -> dict:
     inc_dec_stats['perc. decreasing (only evolutions)'] = round((inc_dec_stats['amount_decreasing'] / total_evolutions) * 100, 2)
 
     return inc_dec_stats
+
+
+
