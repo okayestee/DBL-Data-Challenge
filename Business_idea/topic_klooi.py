@@ -1,8 +1,17 @@
 from bertopic import BERTopic
 from Utility_functions import *
-
+'''
 topic_model = BERTopic.load('merged_model')
-tweet_list = get_random_tweet(1)
-for tweet in tweet_list:
-    text, topic = get_full_text(tweet), get_real_label(tweet['topic'], topic_model.custom_labels_)
-    print(topic,'|', text, '\n')
+tweet = get_random_tweet(1)[0]
+
+print(new_labels(tweet['topic'],topic_model.custom_labels_),'|',tweet['text'])'''
+client = pymongo.MongoClient("mongodb://localhost:27017/")
+db = client['Airline_data']
+collection = db['topics']
+topic_model = BERTopic.load('merged_model')
+
+documents_without_topic = collection.find({'topic': {'$exists': False}})
+i = 0
+for doc in documents_without_topic:
+    i += 1
+print(i)
