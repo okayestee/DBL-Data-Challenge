@@ -252,4 +252,30 @@ def check_media(tweet: dict) -> bool:
                 return True
 
     return False
+
+def languages(folder_path: str) -> dict:
+    """
+    Generates a dictionary that details how many tweets are in each language.
+    :param folder_path: path to the data folder location.
+    :returns: a dictionary with each language as key and the number of times it occurs in the dataset as value.
+    """
+    
+
+    lang: dict = {'Missing': 0}
+    file_path_list = dc.file_paths_list(folder_path)[0:-1]
+
+    for file_path in file_path_list:
+
+        lines = dc.make_tweet_list(file_path)
+        for tweet in lines:
+            if 'lang' in tweet:
+                if tweet['lang'] not in lang:
+                    lang[tweet['lang']] = 1
+                else:
+                    lang[tweet['lang']] += 1
+            else:
+                
+                lang['Missing'] += 1
+    return lang
+
 '''
