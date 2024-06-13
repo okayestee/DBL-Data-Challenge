@@ -1,6 +1,7 @@
 from click import progressbar
 from numpy import append, mean
 import VADER_implementation as v_implement
+import matplotlib.pyplot as plt
 
 
 analyzer = v_implement.analyzer
@@ -96,17 +97,18 @@ def get_evolutions(user_compounds: list[int]) -> list[list[str]]:
 
     return [evolutions, non_evolutions]
 
-def count_evolution_types(list_of_compounds):
-    neg_to_neu = 0
-    neg_to_pos = 0
-    neu_to_neg = 0
-    neu_to_pos = 0
-    pos_to_neu = 0
-    pos_to_neg = 0
+def count_evolution_types(list_of_compounds) -> dict[str, int]:
+    evolution_types: dict[str, int] = {}
 
-    neg_to_neg = 0
-    neu_to_neu = 0
-    pos_to_pos = 0
+    evolution_types['neg_to_neu'] = 0
+    evolution_types['neg_to_pos'] = 0
+    evolution_types['neu_to_neg'] = 0
+    evolution_types['neu_to_pos'] = 0
+    evolution_types['pos_to_neu'] = 0
+    evolution_types['pos_to_neg'] = 0
+    evolution_types['neg_to_neg'] = 0
+    evolution_types['neu_to_neu'] = 0
+    evolution_types['pos_to_pos'] = 0
 
     for convo_compound_list in list_of_compounds:
         if len(convo_compound_list) > 0:
@@ -116,30 +118,31 @@ def count_evolution_types(list_of_compounds):
             # Count evolution types
             for evolution in evolutions:
                 if evolution == 'NEGATIVE ---> NEUTRAL':
-                    neg_to_neu += 1
+                    evolution_types['neg_to_neu'] += 1
                 elif evolution == 'NEGATIVE ---> POSITIVE':
-                    neg_to_pos += 1
+                    evolution_types['neg_to_pos'] += 1
                 elif evolution == 'NEUTRAL ---> NEGATIVE':
-                    neu_to_neg += 1
+                    evolution_types['neu_to_neg'] += 1
                 elif evolution == 'NEUTRAL ---> POSITIVE':
-                    neu_to_pos += 1
+                    evolution_types['neu_to_pos'] += 1
                 elif evolution == 'POSITIVE ---> NEGATIVE':
-                    pos_to_neg += 1
+                    evolution_types['pos_to_neg'] += 1
                 elif evolution == 'POSITIVE ---> NEUTRAL':
-                    pos_to_neu += 1
+                    evolution_types['pos_to_neu'] += 1
 
             for non_evo in all_evos[1]:
                 if non_evo == 'NEGATIVE ---> NEGATIVE':
-                    neg_to_neg += 1
+                    evolution_types['neg_to_neg'] += 1
                 elif non_evo == 'NEUTRAL ---> NEUTRAL':
-                    neu_to_neu += 1
+                    evolution_types['neu_to_neu'] += 1
                 elif non_evo == 'POSITIVE ---> POSITIVE':
-                    pos_to_pos += 1
+                    evolution_types['pos_to_pos'] += 1
             
-    print(f'Non-evolutions: \nNEGATIVE ---> NEGATIVE - {neg_to_neg}\nNEUTRAL ---> NEUTRAL - {neu_to_neu}\nPOSITIVE ---> POSITIVE - {pos_to_pos}\n')
+    # print(f'Non-evolutions: \nNEGATIVE ---> NEGATIVE - {neg_to_neg}\nNEUTRAL ---> NEUTRAL - {neu_to_neu}\nPOSITIVE ---> POSITIVE - {pos_to_pos}\n')
 
+    return evolution_types
     
-    print(f'Evolutions: \nNEGATIVE ---> NEUTRAL - {neg_to_neu}\nNEGATIVE ---> POSITIVE - {neg_to_pos}\nNEUTRAL ---> NEGATIVE - {neu_to_neg}\nNEUTRAL ---> POSITIVE - {neu_to_pos}\nPOSITIVE ---> NEGATIVE - {pos_to_neg}\nPOSITIVE ---> NEUTRAL - {pos_to_neu}\n')
+    # print(f'Evolutions: \nNEGATIVE ---> NEUTRAL - {neg_to_neu}\nNEGATIVE ---> POSITIVE - {neg_to_pos}\nNEUTRAL ---> NEGATIVE - {neu_to_neg}\nNEUTRAL ---> POSITIVE - {neu_to_pos}\nPOSITIVE ---> NEGATIVE - {pos_to_neg}\nPOSITIVE ---> NEUTRAL - {pos_to_neu}\n')
 
 def is_airline_userID(user_ID: int) -> bool:
     airline_userIDs = [56377143, 106062176, 18332190, 22536055, 124476322, 26223583, 2182373406, 38676903, 1542862735, 253340062, 218730857, 45621423, 20626359]
@@ -150,7 +153,14 @@ def is_airline_userID(user_ID: int) -> bool:
 
 
 
-def get_evolution_stats(collection, desired_stats= 'all') -> None:
+def get_evolution_stats(collection, desired_stats= 'combined') -> dict:
+    """
+    Calculates and returns the number of each evolution and non-evolution.
+    :param collection: the MongoDB collection with trees that we should get the stats from
+    :param desired_stats: what part of the data the statistics should be retrieved from. 'combined' by default, can be specified to either 'airline' or 'user'.
+    :returns: a dictionary containing the counts of the evolutions from the specified part of the collection.
+    """
+
 
     trees = list(collection.find({}))
     progress_counter = 0
@@ -185,21 +195,56 @@ def get_evolution_stats(collection, desired_stats= 'all') -> None:
     # Print the results to the terminal
     if desired_stats == 'airline':
         print('Airline conversations:')
-        count_evolution_types(airline_compounds)
+        return count_evolution_types(airline_compounds)
     elif desired_stats == 'user':
         print('User conversations:')
-        count_evolution_types(user_compounds)
-    elif desired_stats == 'combined':
-        print('Combined conversations:')
-        count_evolution_types(all_compounds)
+        return count_evolution_types(user_compounds)
     else:
-        print('Airline conversations:')
-        count_evolution_types(airline_compounds)
-
-        print('User conversations:')
-        count_evolution_types(user_compounds)
-
         print('Combined conversations:')
-        count_evolution_types(all_compounds)
+        return count_evolution_types(all_compounds)
 
+def plot_evos(evolutions: dict[str, int], include_non_evos: bool = False):
+    """
+    Plots the given evolutions on a bar chart.
+    :param evolutions: a dictionary containing the number of each evolution
+    :param include_non_evos: a bool dictating whether to include non-evolutions (sentiments that do not change labels)
+    """
+
+
+    evo_types = list(evolutions.keys())
+    evo_counts = list(evolutions.values())
     
+    if include_non_evos == False:
+        evo_types = evo_types[0:6]
+        evo_counts = evo_counts[0:6]
+
+    # Create a vertical bar chart
+    plt.figure(figsize=(12, 8))
+    plt.bar(evo_types, evo_counts, color='skyblue')
+    plt.xlabel('Evolution Types')
+    plt.ylabel('Number of Evolutions')
+    plt.title('Number of Evolutions for Each Type')
+    plt.xticks(rotation=45, ha='right')  # Rotate the x-axis labels for better readability
+    plt.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
+    plt.tight_layout()  # Adjust layout to prevent clipping of labels
+    plt.show()
+
+def get_increasing_decreasing_stats(evolutions: dict) -> dict:
+
+    inc_dec_stats = dict()
+    
+    inc_dec_stats['amount_increasing'] = evolutions['neg_to_neu'] + evolutions['neg_to_pos'] + evolutions['neu_to_pos']
+    inc_dec_stats['amount_decreasing'] = evolutions['neu_to_neg'] + evolutions['pos_to_neu'] + evolutions['pos_to_neg']
+
+    total_amount = 0
+    for key in evolutions:
+        total_amount += evolutions[key]
+    
+    total_evolutions = inc_dec_stats['amount_increasing'] + inc_dec_stats['amount_decreasing']
+    
+    inc_dec_stats['perc. increasing (all conversations)'] = round((inc_dec_stats['amount_increasing'] / total_amount) * 100, 2)
+    inc_dec_stats['perc. decreasing (all conversations)'] = round((inc_dec_stats['amount_decreasing'] / total_amount) * 100, 2)
+    inc_dec_stats['perc. increasing (only evolutions)'] = round((inc_dec_stats['amount_increasing'] / total_evolutions) * 100, 2)
+    inc_dec_stats['perc. decreasing (only evolutions)'] = round((inc_dec_stats['amount_decreasing'] / total_evolutions) * 100, 2)
+
+    return inc_dec_stats

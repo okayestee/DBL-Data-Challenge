@@ -1,5 +1,6 @@
 from Topic_share import *
 
 db = 'Airline_data'
-
-make_topic_file(db)
+collection = 'no_inconsistency'
+add_topics(db,collection)
+tweets_without_topic(db)
