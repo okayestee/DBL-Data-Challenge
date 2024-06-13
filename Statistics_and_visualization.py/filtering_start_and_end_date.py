@@ -55,4 +55,4 @@ def filter_and_create_collection(db: Database, source_collection_name: str, new_
 client = MongoClient('mongodb://localhost:27017/')
 db = client['AirplaneMode']
 
-filter_and_create_collection(db, 'valid_trees_merged', 'filtered_trees', '2023-01-01', '2023-06-01')
+filter_and_create_collection(db, 'AmericanAir', 'timeframe_trees_AmericanAir', '2020-01-01', '2020-03-01')
