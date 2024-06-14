@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['AirplaneMode']
-valid_trees_collection = db['valid_trees_merged']
+valid_trees_collection = db['timeframe_trees_merged']
 
 # Airline user IDs
 airline_ids = {

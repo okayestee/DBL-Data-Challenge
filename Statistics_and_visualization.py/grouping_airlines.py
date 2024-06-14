@@ -3,7 +3,7 @@ import re
 from tqdm import tqdm
 client = MongoClient("mongodb://localhost:27017/")
 
-db = client['grouping_airlines']
+db = client['AirplaneMode']
 
 #creates collections for each airline
 
@@ -17,7 +17,7 @@ for airline in airlines:
     db.create_collection(airline)
 
 # Replace 'your_collection' with the name of your original collection
-original_collection = db['airline_validtrees']
+original_collection = db['valid_trees_airline']
 
 # Mapping to handle different representations of the same airline
 airline_mapping = {
@@ -67,7 +67,7 @@ for document in documents:
 
 print("Documents have been copied to respective collections.")
 
-original_collection = db['user_validtrees']
+original_collection = db['valid_trees_user']
 
 # Function to find the correct collection name based on text mention
 def find_airline(text):

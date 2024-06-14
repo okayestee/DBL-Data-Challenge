@@ -6,7 +6,7 @@ from collections import Counter
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['AirplaneMode']
-valid_trees_collection = db['valid_trees_merged']
+valid_trees_collection = db['timeframe_trees_merged']
 
 def get_conversation_duration(tree_data):
     # Extract the root tweet data

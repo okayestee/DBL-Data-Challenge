@@ -1,3 +1,4 @@
+import collections
 from click import progressbar
 from numpy import append, mean
 import VADER_implementation as v_implement
@@ -52,7 +53,7 @@ def get_convo(tree_doc: dict) -> list:
     else:
         return list()
 
-def extract_compound_from_convo_VADER(tree) -> list[int]:
+def extract_compounds_from_convo_VADER(tree) -> list[float]:
     conversation = get_convo(tree)
     convo_sentiments = list()
 
@@ -63,7 +64,7 @@ def extract_compound_from_convo_VADER(tree) -> list[int]:
 
     return convo_sentiments
 
-def extract_compound_from_convo_vars(tree) -> list[int]:
+def extract_compounds_from_convo_vars(tree) -> list[float]:
     conversation = get_convo(tree)
     convo_sentiments = list()
 
@@ -73,14 +74,14 @@ def extract_compound_from_convo_vars(tree) -> list[int]:
 
     return convo_sentiments
 
-def get_evolutions(user_compounds: list[int]) -> list[list[str]]:
+def get_evolutions(compounds: list[int]) -> list[list[str]]:
     
     sentiments = []
     evolutions: list[str] = list()
     non_evolutions: list[str] = list()
 
     # Label the sentiment=
-    for compound in user_compounds:
+    for compound in compounds:
         if compound < -0.2:
             sentiments.append('NEGATIVE')
         elif compound > 0.25:
@@ -100,15 +101,15 @@ def get_evolutions(user_compounds: list[int]) -> list[list[str]]:
 def count_evolution_types(list_of_compounds) -> dict[str, int]:
     evolution_types: dict[str, int] = {}
 
-    evolution_types['neg_to_neu'] = 0
-    evolution_types['neg_to_pos'] = 0
-    evolution_types['neu_to_neg'] = 0
-    evolution_types['neu_to_pos'] = 0
-    evolution_types['pos_to_neu'] = 0
-    evolution_types['pos_to_neg'] = 0
-    evolution_types['neg_to_neg'] = 0
-    evolution_types['neu_to_neu'] = 0
-    evolution_types['pos_to_pos'] = 0
+    evolution_types['neg -> neu'] = 0
+    evolution_types['neg -> pos'] = 0
+    evolution_types['neu -> neg'] = 0
+    evolution_types['neu -> pos'] = 0
+    evolution_types['pos -> neu'] = 0
+    evolution_types['pos -> neg'] = 0
+    evolution_types['neg -> neg'] = 0
+    evolution_types['neu -> neu'] = 0
+    evolution_types['pos -> pos'] = 0
 
     for convo_compound_list in list_of_compounds:
         if len(convo_compound_list) > 0:
@@ -118,32 +119,28 @@ def count_evolution_types(list_of_compounds) -> dict[str, int]:
             # Count evolution types
             for evolution in evolutions:
                 if evolution == 'NEGATIVE ---> NEUTRAL':
-                    evolution_types['neg_to_neu'] += 1
+                    evolution_types['neg -> neu'] += 1
                 elif evolution == 'NEGATIVE ---> POSITIVE':
-                    evolution_types['neg_to_pos'] += 1
+                    evolution_types['neg -> pos'] += 1
                 elif evolution == 'NEUTRAL ---> NEGATIVE':
-                    evolution_types['neu_to_neg'] += 1
+                    evolution_types['neu -> neg'] += 1
                 elif evolution == 'NEUTRAL ---> POSITIVE':
-                    evolution_types['neu_to_pos'] += 1
+                    evolution_types['neu -> pos'] += 1
                 elif evolution == 'POSITIVE ---> NEGATIVE':
-                    evolution_types['pos_to_neg'] += 1
+                    evolution_types['pos -> neg'] += 1
                 elif evolution == 'POSITIVE ---> NEUTRAL':
-                    evolution_types['pos_to_neu'] += 1
+                    evolution_types['pos -> neu'] += 1
 
             for non_evo in all_evos[1]:
                 if non_evo == 'NEGATIVE ---> NEGATIVE':
-                    evolution_types['neg_to_neg'] += 1
+                    evolution_types['neg -> neg'] += 1
                 elif non_evo == 'NEUTRAL ---> NEUTRAL':
-                    evolution_types['neu_to_neu'] += 1
+                    evolution_types['neu -> neu'] += 1
                 elif non_evo == 'POSITIVE ---> POSITIVE':
-                    evolution_types['pos_to_pos'] += 1
-            
-    # print(f'Non-evolutions: \nNEGATIVE ---> NEGATIVE - {neg_to_neg}\nNEUTRAL ---> NEUTRAL - {neu_to_neu}\nPOSITIVE ---> POSITIVE - {pos_to_pos}\n')
+                    evolution_types['pos -> pos'] += 1
 
     return evolution_types
     
-    # print(f'Evolutions: \nNEGATIVE ---> NEUTRAL - {neg_to_neu}\nNEGATIVE ---> POSITIVE - {neg_to_pos}\nNEUTRAL ---> NEGATIVE - {neu_to_neg}\nNEUTRAL ---> POSITIVE - {neu_to_pos}\nPOSITIVE ---> NEGATIVE - {pos_to_neg}\nPOSITIVE ---> NEUTRAL - {pos_to_neu}\n')
-
 def is_airline_userID(user_ID: int) -> bool:
     airline_userIDs = [56377143, 106062176, 18332190, 22536055, 124476322, 26223583, 2182373406, 38676903, 1542862735, 253340062, 218730857, 45621423, 20626359]
     if user_ID in airline_userIDs:
@@ -151,9 +148,24 @@ def is_airline_userID(user_ID: int) -> bool:
     else:
         return False
 
+    
+def get_tree_docs(collection, topic: str = '') -> list:
 
+    all_tree_docs = list(collection.find({}))
 
-def get_evolution_stats(collection, desired_stats= 'combined') -> dict:
+    # get the convos with the topic
+    tree_docs: list = []
+
+    for tree_doc in all_tree_docs:
+        if topic != '':
+            if tree_doc['tree_data']['data']['topic'] == topic:
+                tree_docs.append(tree_doc)
+        else:
+            tree_docs.append(tree_doc)
+
+    return tree_docs
+
+def get_evolution_stats(tree_docs, desired_stats= 'combined') -> dict:
     """
     Calculates and returns the number of each evolution and non-evolution.
     :param collection: the MongoDB collection with trees that we should get the stats from
@@ -162,18 +174,17 @@ def get_evolution_stats(collection, desired_stats= 'combined') -> dict:
     """
 
 
-    trees = list(collection.find({}))
     progress_counter = 0
-    collection_size = len(trees)
+    collection_size = len(tree_docs)
 
-    all_compounds: list[list[int]] = list()
-    airline_compounds: list[list[int]] = list()
-    user_compounds: list[list[int]] = list()
+    all_compounds: list[list[float]] = list()
+    airline_compounds: list[list[float]] = list()
+    user_compounds: list[list[float]] = list()
     
-    for tree in trees:
+    for tree in tree_docs:
         starting_user_id = tree['tree_data']['data']['user']['id']
         if is_airline_userID(starting_user_id):
-            compound_scores = extract_compound_from_convo_VADER(tree) # CHANGE THIS TO THE extract_compound_from_convo_vars FORM ONCE SENTIMENT VARS HAVE BEEN ADDED
+            compound_scores = extract_compounds_from_convo_VADER(tree) # CHANGE THIS TO THE extract_compound_from_convo_vars FORM ONCE SENTIMENT VARS HAVE BEEN ADDED
             airline_compound_scores = compound_scores[1::2]
             airline_compounds.append(airline_compound_scores)
             all_compounds.append(airline_compound_scores)
@@ -181,7 +192,7 @@ def get_evolution_stats(collection, desired_stats= 'combined') -> dict:
             progress_counter += 1
 
         else:
-            compound_scores = extract_compound_from_convo_VADER(tree) # ALSO CHANGE THIS ONE LATER LIKE THE ONE ABOVE
+            compound_scores = extract_compounds_from_convo_VADER(tree) # ALSO CHANGE THIS ONE LATER LIKE THE ONE ABOVE
             user_compound_scores = compound_scores[0::2]
             user_compounds.append(user_compound_scores)
             all_compounds.append(user_compound_scores)
@@ -203,7 +214,7 @@ def get_evolution_stats(collection, desired_stats= 'combined') -> dict:
         print('Combined conversations:')
         return count_evolution_types(all_compounds)
 
-def plot_evos(evolutions: dict[str, int], include_non_evos: bool = False):
+def plot_evos(evolutions: dict[str, int], chart_type: str='pie', include_non_evos: bool = False):
     """
     Plots the given evolutions on a bar chart.
     :param evolutions: a dictionary containing the number of each evolution
@@ -220,12 +231,16 @@ def plot_evos(evolutions: dict[str, int], include_non_evos: bool = False):
 
     # Create a vertical bar chart
     plt.figure(figsize=(12, 8))
-    plt.bar(evo_types, evo_counts, color='skyblue')
+    if chart_type == 'bar':
+        plt.bar(evo_types, evo_counts)
+        plt.ylabel('Number of Evolutions')
+        plt.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
+    else:
+        plt.pie(evo_counts, labels=evo_types, autopct='%1.1f%%')
+
     plt.xlabel('Evolution Types')
-    plt.ylabel('Number of Evolutions')
-    plt.title('Number of Evolutions for Each Type')
+    plt.title('Evolutions for Each Type')
     plt.xticks(rotation=45, ha='right')  # Rotate the x-axis labels for better readability
-    plt.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
     plt.show()
 
@@ -233,8 +248,8 @@ def get_increasing_decreasing_stats(evolutions: dict) -> dict:
 
     inc_dec_stats = dict()
     
-    inc_dec_stats['amount_increasing'] = evolutions['neg_to_neu'] + evolutions['neg_to_pos'] + evolutions['neu_to_pos']
-    inc_dec_stats['amount_decreasing'] = evolutions['neu_to_neg'] + evolutions['pos_to_neu'] + evolutions['pos_to_neg']
+    inc_dec_stats['amount_increasing'] = evolutions['neg -> neu'] + evolutions['neg -> pos'] + evolutions['neu -> pos']
+    inc_dec_stats['amount_decreasing'] = evolutions['neu -> neg'] + evolutions['pos -> neu'] + evolutions['pos -> neg']
 
     total_amount = 0
     for key in evolutions:
@@ -248,3 +263,6 @@ def get_increasing_decreasing_stats(evolutions: dict) -> dict:
     inc_dec_stats['perc. decreasing (only evolutions)'] = round((inc_dec_stats['amount_decreasing'] / total_evolutions) * 100, 2)
 
     return inc_dec_stats
+
+
+
