@@ -74,7 +74,7 @@ def get_sentiment_stats(collection) -> dict:
 
     return sentiment_stats
 
-def plot_sentiment_stats(sentiment_stats: dict, show_means = False) -> None:
+def plot_sentiment_stats(sentiment_stats: dict, show_means = False, chart_type='pie') -> None:
 
     """
     Plots the given tweets their sentiment distribtuion on a bar chart.
@@ -95,10 +95,14 @@ def plot_sentiment_stats(sentiment_stats: dict, show_means = False) -> None:
 
     # Create a vertical bar chart
     plt.figure(figsize=(12, 8))
-    plt.bar(sentiment_types, sentiment_counts, color='skyblue')
+    if chart_type == 'bar':
+        plt.bar(sentiment_types, sentiment_counts, color='skyblue')
+        plt.ylabel('Number of Tweets with Type')
+    else:
+        plt.pie(sentiment_counts, labels=sentiment_types, autopct='%1.1f%%')
+
     plt.xlabel('Sentiment Types')
-    plt.ylabel('Number of Tweets with Type')
-    plt.title('Number of Tweets for Each Sentiment Type')
+    plt.title('Tweets for Each Sentiment Type')
     plt.xticks(rotation=45, ha='right')  # Rotate the x-axis labels for better readability
     plt.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
     plt.tight_layout()  # Adjust layout to prevent clipping of labels

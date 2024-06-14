@@ -233,14 +233,14 @@ def plot_evos(evolutions: dict[str, int], chart_type: str='pie', include_non_evo
     plt.figure(figsize=(12, 8))
     if chart_type == 'bar':
         plt.bar(evo_types, evo_counts)
+        plt.ylabel('Number of Evolutions')
+        plt.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
     else:
         plt.pie(evo_counts, labels=evo_types, autopct='%1.1f%%')
 
     plt.xlabel('Evolution Types')
-    plt.ylabel('Number of Evolutions')
-    plt.title('Number of Evolutions for Each Type')
+    plt.title('Evolutions for Each Type')
     plt.xticks(rotation=45, ha='right')  # Rotate the x-axis labels for better readability
-    plt.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
     plt.show()
 
