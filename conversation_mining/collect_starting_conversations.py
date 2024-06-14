@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 def collect_starting_conversations():
     client = MongoClient('mongodb://localhost:27017/')
     db = client['DBL']
-    collection = db['no_inconsistency']  # cleaned data
+    collection = db['Sentiment_included']  # cleaned data
     starting_tweets_collection = db['starting_tweets']
 
     # Create an index on the in_reply_to_status_id field

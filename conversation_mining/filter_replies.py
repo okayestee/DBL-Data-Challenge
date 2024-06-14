@@ -6,9 +6,9 @@ def filter_replies():
         # Connect to the MongoDB server
         client = MongoClient('mongodb://localhost:27017/')
         # Select the database
-        db = client['AirplaneMode']
+        db = client['DBL']
         # Select the collections
-        removed_duplicates_collection = db['no_inconsistency'] #cleaned data
+        removed_duplicates_collection = db['Sentiment_included'] #cleaned data
         return db, removed_duplicates_collection
 
     def create_indexes(collection):
