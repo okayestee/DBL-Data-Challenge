@@ -2,7 +2,7 @@ from statistics import mean
 from turtle import pos
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from bson.objectid import ObjectId
-
+import nltk
 def update_VADER(analyzer: SentimentIntensityAnalyzer):
     analyzer.lexicon['help'] = 0
     analyzer.lexicon['cancellation'] = -2.29
@@ -98,6 +98,7 @@ def add_sentiment_variables(database, old_collection, new_collection_name: str) 
         print(documents_processed)
 
 # Get the VADER analyzer
+nltk.download('vader_lexicon')
 analyzer = SentimentIntensityAnalyzer()
 analyzer = update_VADER(analyzer)
 
