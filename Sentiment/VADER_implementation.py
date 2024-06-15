@@ -51,17 +51,9 @@ def get_full_text(tweet):
     else:
         return tweet.get('text', '')
     
-def add_to_document(doc_id, new_field: str, new_value, new_collection):
-    collection = new_collection
-    if collection.find_one({'_id' : doc_id}) != None:
-        collection.update_one(
-        {"_id": ObjectId(str(doc_id))},
-        {"$set": {new_field: new_value}}
-        )
 
 def add_entire_document(document, new_collection):
         new_collection.insert_one(document)
-
 
 
 def add_sentiment_variables(database, old_collection, new_collection_name: str) -> None:
