@@ -3,10 +3,14 @@ from turtle import pos
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from bson.objectid import ObjectId
 import nltk
-def update_VADER(analyzer: SentimentIntensityAnalyzer):
+
+def update_VADER(analyzer: SentimentIntensityAnalyzer) -> SentimentIntensityAnalyzer:
     """
-    Takes and returns a VADER analyzer with custom words with custom values.
+    Takes a VADER analyzer and updates it with custom words with custom values.
+    :param analyzer: the VADER analyzer that will be changed
+    :returns: the updated analyzer
     """
+
     analyzer.lexicon['help'] = 0
     analyzer.lexicon['cancellation'] = -2.29
     analyzer.lexicon['cancelled'] = analyzer.lexicon['cancellation']
@@ -44,14 +48,21 @@ def update_VADER(analyzer: SentimentIntensityAnalyzer):
 
     return analyzer
 
-def analyze_sentiment(text):
+def analyze_sentiment(text: str) -> dict[str, float]:
     """
-    Analyzes the sentiment of a piece of text and returns.
+    Analyzes the sentiment of a piece of text and returns the sentiment scores.
+    :param text: the string that contains the text that will be analyzed
     """
+
     sentiment_score = analyzer.polarity_scores(text)
     return sentiment_score
 
-def get_full_text(tweet):
+def get_full_text(tweet) -> str:
+    """
+    Gets the full text of a tweet object. Either just the text field or the full_text field if it has been truncated.
+    :param tweet: the tweet to get the text from
+    """
+
     if tweet.get('truncated', True):
         return tweet.get('extended_tweet', {}).get('full_text', '')
     else:
@@ -59,10 +70,13 @@ def get_full_text(tweet):
     
 
 
-def add_entire_document(document, new_collection):
+def add_entire_document(document, new_collection) -> None:
         """
         Inserts a document into a MongoDB collection.
+        :param document: document to be inserted
+        :param new_collection: the collection the document will be inserted into
         """
+
         new_collection.insert_one(document)
 
 
@@ -71,12 +85,16 @@ def add_sentiment_variables(database, old_collection, new_collection_name: str) 
     """
     Creates a new collection and fills it with the documents from the old collection 
     and adds the sentiment variables to all documents in the new collection.
+    :param database: the database that should hold the new collection
+    :param old_collection: the collection of tweets that will be copied and analyzed
+    :param new_collection_name: the name of the new collection that will include the sentiment variables.
     """
 
     # Process documents in batches
     batch_size = 10000
     documents_processed = 0
 
+    # Create the new collection if it does not yet exist
     if new_collection_name not in database.list_collection_names():
         new_collection = database.create_collection(new_collection_name)
     else:
@@ -95,8 +113,10 @@ def add_sentiment_variables(database, old_collection, new_collection_name: str) 
             text = get_full_text(document)
             sentiment = analyze_sentiment(text)
 
+            # Copy the tweet into the new collection
             add_entire_document(document, new_collection)
 
+            # Add the sentiment variables to the tweet in the new collection
             if text[-1:] == '…':
                 new_collection.update_one(
                 {"_id": ObjectId(document.get('_id'))},
