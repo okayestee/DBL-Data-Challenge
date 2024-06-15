@@ -4,6 +4,9 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from bson.objectid import ObjectId
 
 def update_VADER(analyzer: SentimentIntensityAnalyzer):
+    """
+    Takes and returns a VADER analyzer with custom words with custom values.
+    """
     analyzer.lexicon['help'] = 0
     analyzer.lexicon['cancellation'] = -2.29
     analyzer.lexicon['cancelled'] = analyzer.lexicon['cancellation']
@@ -42,6 +45,9 @@ def update_VADER(analyzer: SentimentIntensityAnalyzer):
     return analyzer
 
 def analyze_sentiment(text):
+    """
+    Analyzes the sentiment of a piece of text and returns.
+    """
     sentiment_score = analyzer.polarity_scores(text)
     return sentiment_score
 
@@ -52,11 +58,20 @@ def get_full_text(tweet):
         return tweet.get('text', '')
     
 
+
 def add_entire_document(document, new_collection):
+        """
+        Inserts a document into a MongoDB collection.
+        """
         new_collection.insert_one(document)
 
 
+
 def add_sentiment_variables(database, old_collection, new_collection_name: str) -> None:
+    """
+    Creates a new collection and fills it with the documents from the old collection 
+    and adds the sentiment variables to all documents in the new collection.
+    """
 
     # Process documents in batches
     batch_size = 10000

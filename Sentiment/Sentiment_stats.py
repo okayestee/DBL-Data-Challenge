@@ -33,7 +33,7 @@ def get_sentiment_stats(collection) -> dict:
         
         for document in batch:
 
-            compound_score = document.get('compound sentiment')
+            compound_score: float = float(document.get('compound sentiment'))
 
             neg_counter = 0
             neu_counter = 0
