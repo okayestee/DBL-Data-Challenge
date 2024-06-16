@@ -5,7 +5,7 @@ from tqdm import tqdm
 def remove_inconsistencies():
     def connect_to_db():
         client = MongoClient('mongodb://localhost:27017/')
-        db = client.AirplaneMode
+        db = client.DBL #Your database
         return db
 
     def create_indexes(collection):
