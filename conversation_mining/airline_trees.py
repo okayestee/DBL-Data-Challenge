@@ -7,7 +7,7 @@ from queue import Queue
 # Connect to MongoDB
 def airline_trees():
     client = MongoClient("mongodb://localhost:27017/")
-    db = client.AirplaneMode
+    db = client.DBL
     airline_convo_starters = db.airline_convo_starters
     replies = db.replies
     airline_trees = db.airline_trees

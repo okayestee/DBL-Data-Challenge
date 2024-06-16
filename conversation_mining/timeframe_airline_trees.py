@@ -8,7 +8,7 @@ def timeframe_airline_trees():
 
     # Connect to MongoDB and specify the collections
     client = MongoClient('mongodb://localhost:27017/')
-    db = client['AirplaneMode']
+    db = client['DBL']
     old_collection = db['airline_trees']  # Your original collection with tree structures
     new_collection = db['timevertical_trees_airline']  # New collection for filtered tree structures
 

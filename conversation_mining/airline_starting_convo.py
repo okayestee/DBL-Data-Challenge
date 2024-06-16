@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 def airline_convo_starters():
     # Connect to MongoDB
     client = MongoClient('mongodb://localhost:27017/')
-    db = client['AirplaneMode']
+    db = client['DBL']
     starting_tweets_collection = db['starting_tweets']
     airline_convo_starters_collection = db['airline_convo_starters']
 
