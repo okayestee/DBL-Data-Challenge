@@ -6,7 +6,7 @@ from tqdm import tqdm
 def tweet_order_user():
     # Connect to MongoDB
     client = MongoClient('mongodb://localhost:27017/')
-    db = client['AirplaneMode']
+    db = client['DBL']
     user_trees_collection = db['timevertical_trees_user']
     valid_trees_collection = db['valid_trees_user']
 
