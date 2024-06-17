@@ -19,3 +19,22 @@ def topic_distribution(docs) -> dict:
             topic_dict[topic_label] += 1
     return topic_dict
 
+def topic_distribution_test(collection) -> dict:
+    pipeline = [
+    {
+        "$group": {
+            "_id": "$topic",
+            "count": {"$sum": 1}
+        }
+    }
+    ]
+
+    # Execute the aggregation
+    results = collection.aggregate(pipeline)
+
+    # Convert the results to a dictionary
+    topic_counts = {result['_id']: result['count'] for result in results}
+
+    return topic_counts
+
+

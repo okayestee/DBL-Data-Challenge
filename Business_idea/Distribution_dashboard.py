@@ -11,18 +11,17 @@ Name = 'all data'
 
 # database name and collection name
 db = 'Airline_data'
-collections = 'topics'
-n_topics: int = 15
+collection = 'topics'
+n_topics: int = 20
+is_airline = False
 
 
 
 
 
 # from here on do not touch the code
-topic_model = BERTopic.load('merged_model')
-
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client[db]
 collection = db[collection]
-show_vis_topics(topic_distribution(collection.find({})),Name, n_topics)
+show_vis_topics(topic_distribution_test(collection),Name, n_topics, is_airline)
 

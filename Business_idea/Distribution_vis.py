@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def show_vis_topics(data: dict, name: str, n_topics: int = 5):
+def show_vis_topics(data: dict, name: str, n_topics: int = 5, is_airline: bool = False):
     # Sorting the dictionary by values
     sorted_data = dict(sorted(data.items(), key=lambda item: item[1], reverse=True))
 
@@ -14,13 +14,14 @@ def show_vis_topics(data: dict, name: str, n_topics: int = 5):
     # Converting counts to percentages
     percentages = [(count / total_count) * 100 for count in counts]
 
-    topics = topics[:n_topics - 1]
-    percentages = percentages[:n_topics - 1]
+    topics = topics[:n_topics]
+    percentages = percentages[:n_topics]
 
     # Creating the bar chart with percentages
     plt.figure(figsize=(10, 8))
     plt.barh(topics, percentages, color='skyblue')
-    plt.xlim([0,18])
+    if is_airline:
+        plt.xlim([0,18])
     plt.xlabel('Percentage')
     plt.ylabel('Topics')
     plt.title(f'Topics and Their Percentages for {name}')
@@ -28,3 +29,4 @@ def show_vis_topics(data: dict, name: str, n_topics: int = 5):
     plt.tight_layout()
 
     plt.savefig(f'{name}.png')
+    plt.show()
