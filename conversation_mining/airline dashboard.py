@@ -7,9 +7,12 @@ def main():
     runpy.run_path("collect_starting_conversation.py")
     runpy.run_path("user_starting_convo.py")
     runpy.run_path("airline_starting_convo.py")
+    runpy.run_path("user_trees.py")
     runpy.run_path("airline_trees.py")
-    runpy.run_path("timeframe.py") #make sure you reference to the airline_trees collection
-    runpy.run_path("tweet_order.py") #make sure you referene to the airline_trees collection
+    runpy.run_path("timeframe_user_trees.py") #make sure you reference to the tiairline_trees collection
+    runpy.run_path("timeframe_airline_trees.py")
+    runpy.run_path("tweet_order_user.py") #make sure you referene to the airline_trees collection
+    runpy.run_path("tweet_order_airline.py")
 
 '''
 after you ran the code above, uncomment the code below and

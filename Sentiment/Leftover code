@@ -1,0 +1,20 @@
+'''
+
+def get_replies(tree_data: dict) -> list:
+    """
+    Gets and returns a list of all replies in a given tree.
+    :param tree_data: the root tree_data object
+    :returns: a list of all replies
+    """
+
+    replies: list = []
+
+    for reply_index in range(0, len(tree_data['children'])):
+        replies.append(get_reply_by_index(tree_data, reply_index))
+
+
+    return replies
+
+
+
+'''
