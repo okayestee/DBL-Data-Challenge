@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def show_vis_topics(data: dict, name: str):
+def show_vis_topics(data: dict, name: str, n_topics: int = 5):
     # Sorting the dictionary by values
     sorted_data = dict(sorted(data.items(), key=lambda item: item[1], reverse=True))
 
@@ -13,6 +13,9 @@ def show_vis_topics(data: dict, name: str):
 
     # Converting counts to percentages
     percentages = [(count / total_count) * 100 for count in counts]
+
+    topics = topics[:n_topics - 1]
+    percentages = percentages[:n_topics - 1]
 
     # Creating the bar chart with percentages
     plt.figure(figsize=(10, 8))

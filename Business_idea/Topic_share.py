@@ -46,12 +46,13 @@ def add_topics(db_name, collection_name):
         with tqdm(total= total_tweets, desc="Writing topics to collection", unit="documents") as pbar:
 
             for doc in collection.find({}):
-                for line in file_gen:
-
+                for i in range(len(file_gen)):
+                    line = file_gen[i]
                     data = json.loads(line)
 
                     if str(data['id_str']) == str(doc['id_str']):
                         doc['topic'] = data['topic']
+                        del file_gen[i]
                         break
 
                 new_collection.insert_one(doc)
