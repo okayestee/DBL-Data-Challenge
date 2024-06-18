@@ -23,6 +23,9 @@ def filter_and_create_collection(db: Database, source_collection_name: str, new_
     start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
     end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
 
+    print(f"Start date: {start_date}")
+    print(f"End date: {end_date}")
+
     # Connect to the source collection
     source_collection: Collection = db[source_collection_name]
 
