@@ -9,14 +9,35 @@ collection = db['Airline_convos'] ## Choose a collection of conversations
 # Get the evolution statistics
 evolution_statistics = senti_evo.get_evolution_stats(senti_evo.get_tree_docs(collection))
 
-topic_evolution_stats = senti_evo.get_evolution_stats(senti_evo.get_tree_docs(collection, 'Baggage')) ## Fill in the name of the desired topic
-
 # Print the exact counts in the terminal
 print(evolution_statistics)
-print(topic_evolution_stats)
+#print(topic_evolution_stats)
 
 # Print the distribution of increasing and decreasing evolutions
 print(senti_evo.get_increasing_decreasing_stats(evolution_statistics))
 
 # Create a bar chart of the evolutions
 senti_evo.plot_evos(evolution_statistics)
+
+
+# Get the topic sentiment evolution chart
+topics = ['Baggage', 'Delay']
+airline_collection_names = ['American', 'KLM', 'Lufthanse']
+
+dictionary_topics: dict[str, dict[str, float]] = {}
+
+for topic in topics:
+    dictionary_topics[topic] = dict()
+    for airline in airline_collection_names:
+        dictionary_topics[topic][airline] = senti_evo.get_data_for_topics(db[airline], topic)['perc. increasing (only evolutions)']
+
+inc_percentages: list[list[float]] = []
+
+for topic in topics:
+    perc_list = list()
+    for airline in airline_collection_names:
+        perc_list.append(dictionary_topics[topic][airline])
+    inc_percentages.append(perc_list)
+
+senti_evo.plot_increasing_per_topic_per_airline(['Baggage'], ['American'], inc_percentages)
+

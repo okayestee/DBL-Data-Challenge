@@ -1,6 +1,7 @@
 from numpy import append, mean
 import VADER_implementation as v_implement
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Get the VADER analyzer
 analyzer = v_implement.analyzer
@@ -347,3 +348,48 @@ def plot_inc_dec(evolutions: dict[str, int], chart_type='pie'):
     plt.xticks(rotation=45, ha='right')  # Rotate the x-axis labels for better readability
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
     plt.show()
+
+def get_data_for_topics(collection, topic: str):
+    """
+    Gets the evo stats for a specific topic for a specific (airlines) collection.
+    :param collection: the collection of conversations
+    :param topic: the topic that the conversations must be about
+    :returns: a dictionary containing the evo data
+    """
+    return get_evolution_stats(get_tree_docs(collection, topic))
+
+
+def plot_increasing_per_topic_per_airline(topics: list[str], airlines: list[str], inc_percentages: list[list[float]]):
+
+    # Number of categories and subcategories
+    n_categories = len(topics)
+    n_subcategories = len(airlines)
+
+    # Width of bars
+    bar_width = 0.2
+
+    # X positions of categories
+    category_indices = np.arange(n_categories)
+
+    # Create a figure and axis
+    fig, ax = plt.subplots()
+
+    # Plot bars for each subcategory
+    for i in range(n_subcategories):
+        ax.bar(category_indices + i * bar_width, [inc_percentages[j][i] for j in range(n_categories)], 
+            width=bar_width, label=airlines[i])
+
+    # Set labels and title
+    ax.set_xlabel('Topics')
+    ax.set_ylabel('Percentage Increasing Sentiment Evolutions')
+    ax.set_title('Increasing sentiment per Topic')
+    ax.set_xticks(category_indices + bar_width * (n_subcategories - 1) / 2)
+    ax.set_xticklabels(topics)
+    ax.legend()
+    ax.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
+
+
+    # Show the plot
+    plt.show()
+
+plot_increasing_per_topic_per_airline(['Baggage', 'Delays', 'Cancellations'], ['American Air', 'KLM', 'Lufthansa'], [[10,20, 7], [40, 50, 35], [34,26,29]])
