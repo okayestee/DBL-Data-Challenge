@@ -5,7 +5,7 @@ from collections import Counter
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
-db = client['AirplaneMode']
+db = client['DBL']
 valid_trees_collection = db['timeframe_trees_merged']
 
 def get_conversation_duration(tree_data):

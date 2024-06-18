@@ -3,7 +3,7 @@ from tqdm import tqdm
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
-db = client.AirplaneMode
+db = client.DBL
 
 # Get collections
 valid_trees_user = db.valid_trees_user

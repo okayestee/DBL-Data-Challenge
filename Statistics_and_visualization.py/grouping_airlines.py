@@ -3,7 +3,7 @@ import re
 from tqdm import tqdm
 client = MongoClient("mongodb://localhost:27017/")
 
-db = client['AirplaneMode']
+db = client['DBL']
 
 #creates collections for each airline
 
