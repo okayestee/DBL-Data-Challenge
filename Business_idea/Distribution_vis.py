@@ -18,7 +18,7 @@ def show_vis_topics(data: dict, name: str, n_topics: int = 5, is_airline: bool =
     percentages = percentages[:n_topics]
 
     # Creating the bar chart with percentages
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(8, 10))
     plt.barh(topics, percentages, color='skyblue')
     if is_airline:
         plt.xlim([0,18])
