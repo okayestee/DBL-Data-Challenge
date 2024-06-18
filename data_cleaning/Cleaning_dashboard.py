@@ -16,5 +16,16 @@ data_cleaning_folder_name: str = 'data_cleaning' # 'data cleaning' by default
 
 
 # DO NOT TOUCH THIS
-path: str = f'DBL-Data-Challenge/{data_cleaning_folder_name}/../{data_folder_name}'
+path: str = f'{data_cleaning_folder_name}/../{data_folder_name}'
 data_cleans.clean_all_files(path)
+
+# import runpy
+# # dashboard for filtering out the replies and roots
+# # and for creating and filtering the airline trees
+
+# def main():
+#     runpy.run_path("data_cleaning\\data_cleans.py")
+
+
+# if __name__ == "__main__":
+#     main()
