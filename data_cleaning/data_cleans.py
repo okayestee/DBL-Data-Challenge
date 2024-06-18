@@ -137,3 +137,4 @@ def check_media(tweet: dict) -> bool:
                 return True
 
     return False
+
