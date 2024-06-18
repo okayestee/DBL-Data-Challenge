@@ -3,7 +3,7 @@ import pymongo
 
 # Connect to the database
 client = pymongo.MongoClient("mongodb://localhost:27017/") ## Connect to MongoDB
-db = client['DBL_data'] ## Use the DBL database
+db = client['DBL'] ## Use the DBL database
 collection = db['Airline_convos'] ## Choose a collection of conversations
 
 # Get the evolution statistics
