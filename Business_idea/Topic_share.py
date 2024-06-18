@@ -140,7 +140,7 @@ def add_topics(db_name, collection_name):
                     data = json.loads(line)
                     if str(data['id_str']) == str(doc['id_str']):
                         doc['topic'] = data['topic']
-                        del file_gen[line]
+                        del file_gen[line.index()]
                         break
                 new_collection.insert_one(doc)
                 pbar.update(1)
