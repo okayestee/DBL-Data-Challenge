@@ -16,5 +16,6 @@ data_cleaning_folder_name: str = 'data_cleaning' # 'data cleaning' by default
 
 
 # DO NOT TOUCH THIS
-path: str = f'DBL-Data-Challenge/{data_cleaning_folder_name}/../{data_folder_name}'
+path: str = f'{data_cleaning_folder_name}/../{data_folder_name}'
 data_cleans.clean_all_files(path)
+
