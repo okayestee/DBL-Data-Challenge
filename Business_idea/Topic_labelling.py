@@ -5,9 +5,7 @@ import gc
 
 topic_model = BERTopic.load('merged_model')
 
-topic_labels = topic_model.generate_topic_labels(nr_words=2, topic_prefix=False, word_length=None, separator=', ', aspect=None) 
+topic_labels = ['Undefined','Response', 'Qantas', 'Posted', 'Ryanair', 'Baggage', 'Easyjet', 'Avgeek', 'Lufthansa', 'Seats', 'Delays', 'Racial Retweet', 'Coronavirus','Cancelled','Booking reference', 'Airline','Refunds','KLM','Thank you for Flight','Roundtrip','Retweet backless seats', 'Twitter jargon','Retweet pride parade','Food','Retweet Breastfeeding','Retweet Lesbian','Climate','Retweet Lufthansa Iran','General Retweet','Corporate affairs','Racism','Locating baggage','Racial Retweet','Refunds','Retweet muslims','Italy','Retweet non-airline incident','Places in england','Retweet BTS','Flying','Retweet discrimination corona','Retweet lesbian sexualization','Flight tracker','Workers and Catering','Claims','Retweet Nigerian lawyer','Retweet Terrorism','Europa AirFrance']
 topic_model.set_topic_labels(topic_labels)
-topic_model.set_topic_labels({1: "Qantas", 3: "Ryanair", 5: "EasyJet", 7: "Lufthansa", 16: 'KLM', 4: 'Baggage', 18: 'Roundtrip', 27: 'Retweet'})
-
 print(topic_model.get_topic_info())
 topic_model.save('merged_model')
