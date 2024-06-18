@@ -1,6 +1,6 @@
 from Topic_share import *
 
-db = 'Airline_data'
+db = 'DBL'
 collection = 'no_inconsistency'
 
 
