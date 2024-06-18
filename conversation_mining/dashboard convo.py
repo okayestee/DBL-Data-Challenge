@@ -1,27 +1,31 @@
-import runpy
-# dashboard for filtering out the replies and roots
-# and for creating and filtering the airline trees
+import subprocess
+import sys
+
+def run_script(script_path):
+    try:
+        print(f"Running {script_path}...")
+        result = subprocess.run([sys.executable, script_path], check=True)
+        print(f"Completed {script_path}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while running {script_path}: {e}")
 
 def main():
-    runpy.run_path("filter_replies.py")
-    runpy.run_path("collect_starting_conversations.py")
-    runpy.run_path("user_starting_convo.py")
-    runpy.run_path("airline_starting_convo.py")
-    runpy.run_path("user_trees.py")
-    runpy.run_path("airline_trees.py")
-    runpy.run_path("timeframe_user_trees.py") #make sure you reference to the tiairline_trees collection
-    runpy.run_path("timeframe_airline_trees.py")
-    runpy.run_path("tweet_order_user.py") #make sure you referene to the airline_trees collection
-    runpy.run_path("tweet_order_airline.py")
+    scripts = [
+        "conversation_mining\\filter_replies.py",
+        "conversation_mining\\collect_starting_conversation.py",
+        "conversation_mining\\user_starting_convo.py",
+        "conversation_mining\\airline_starting_convo.py",
+        "conversation_mining\\user_trees.py",
+        "conversation_mining\\airline_trees.py",
+        "conversation_mining\\timeframe_user_trees.py",
+        "conversation_mining\\timeframe_airline_trees.py",
+        "conversation_mining\\tweet_order_user.py",      
+        "conversation_mining\\tweet_order_airline.py"
+    ]
+    
+    for script in scripts:
+        run_script(script)
 
-
-
+# Execute the main function
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
