@@ -7,6 +7,6 @@ db = client['DBL']  # Replace with your database name
 start_date_str = "Tue Dec 31 00:00:00 +0000 2019"
 end_date_str = "Wed Jan 01 00:00:00 +0000 2020"
 
-filter_tweets_by_date_manually(db, 'Sentiment_included', 'Timeframe_filtered_tweets', start_date_str, end_date_str) #filtering individual tweets
+filter_tweets_by_date_manually(db, 'AmericanAir_tweets', 'Timeframe_filtered_tweets', start_date_str, end_date_str) #filtering individual tweets
 
 # filter_and_create_collection(db, 'valid_trees_merged', 'timeframe_trees_merged', start_date_str, end_date_str) #filtering collections storing valid trees

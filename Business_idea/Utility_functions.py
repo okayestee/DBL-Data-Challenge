@@ -2,6 +2,11 @@ import pymongo
 import re
 import gc
 from bertopic import BERTopic
+from pymongo import MongoClient
+
+
+client = MongoClient("mongodb://localhost:27017/")
+db = client.DBL
 
 def get_full_text(tweet):
     if tweet.get('truncated', True):
@@ -88,6 +93,11 @@ def filter_tweets_by_mention(collection, user_handle):
         if user_handle in tweet.get('text', ''):
             mentions.append(tweet)
     return mentions
+
+AmericanAir_tweets = db['AmericanAir_tweets']
+for tweet in filter_tweets_by_mention(db['Sentiment_included'], 'AmericanAir'):
+    AmericanAir_tweets.insert_one(tweet)
+
 
 
 def new_labels(label, topic_labels):
