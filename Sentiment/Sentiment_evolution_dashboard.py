@@ -4,7 +4,7 @@ import pymongo
 # Connect to the database
 client = pymongo.MongoClient("mongodb://localhost:27017/") ## Connect to MongoDB
 db = client['DBL'] ## Use the DBL database
-collection = db['timeframe_trees_merged'] ## Choose a collection of conversations
+collection = db['valid_trees_merged'] ## Choose a collection of conversations
 
 # Get the evolution statistics
 evolution_statistics = senti_evo.get_evolution_stats(senti_evo.get_tree_docs(collection))
@@ -17,7 +17,7 @@ print(evolution_statistics)
 print(senti_evo.get_increasing_decreasing_stats(evolution_statistics))
 
 # Create a bar chart of the evolutions
-senti_evo.plot_evos(evolution_statistics)
+senti_evo.plot_evos(evolution_statistics) 
 senti_evo.plot_evo_non_evo(evolution_statistics)
 senti_evo.plot_inc_dec(evolution_statistics)
 
