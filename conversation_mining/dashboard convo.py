@@ -11,15 +11,15 @@ def run_script(script_path):
 
 def main():
     scripts = [
-        "conversation_mining\\filter_replies.py",
-        "conversation_mining\\collect_starting_conversations.py",
-        "conversation_mining\\user_starting_convo.py",
-        "conversation_mining\\airline_starting_convo.py",
-        "conversation_mining\\user_trees.py",
+        # "conversation_mining\\filter_replies.py",
+        # "conversation_mining\\collect_starting_conversations.py",
+        # "conversation_mining\\user_starting_convo.py",
+        # "conversation_mining\\airline_starting_convo.py",
+        # "conversation_mining\\user_trees.py",
         "conversation_mining\\airline_trees.py",
-        "conversation_mining\\timeframe_user_trees.py",  # Make sure you reference to the airline_trees collection
+        "conversation_mining\\timeframe_user_trees.py",  
         "conversation_mining\\timeframe_airline_trees.py",
-        "conversation_mining\\tweet_order_user.py",      # Make sure you reference to the airline_trees collection
+        "conversation_mining\\tweet_order_user.py",      
         "conversation_mining\\tweet_order_airline.py",
         "conversation_mining\\merge_valid_trees.py"
     ]

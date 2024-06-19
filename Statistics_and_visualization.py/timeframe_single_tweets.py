@@ -127,7 +127,7 @@ def filter_tweets_by_date_manually(db: Database, source_collection_name: str, ne
 
 # Example usage:
 client = MongoClient('mongodb://localhost:27017/')
-db = client['AirplaneMode']  # Replace with your database name
+db = client['DBL']  # Replace with your database name
 
 start_date_str = "Wed Dec 23 00:00:00 +0000 2019"
 end_date_str = "Wed Jan 01 00:00:00 +0000 2020"
