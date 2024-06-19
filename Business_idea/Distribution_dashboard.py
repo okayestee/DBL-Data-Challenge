@@ -7,21 +7,23 @@ from bertopic import BERTopic
 
 
 # name you wnat to have displayed at the top of the barchart
-Name = 'all data'
+Name = 'American airlines'
 
 # database name and collection name
 db = 'Airline_data'
-collection = 'topics'
-n_topics: int = 20
-is_airline = False
-
-
-
-
+collection: str = 'topics_real'
+n_topics: int = 5
+is_airline: bool = True
+#only works when is_airline is set to True
+tag: str = '@americanair'
 
 # from here on do not touch the code
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client[db]
 collection = db[collection]
-show_vis_topics(topic_distribution_test(collection),Name, n_topics, is_airline)
+
+if is_airline:
+    show_vis_topics(topic_distribution_airline(collection, tag), Name, n_topics, is_airline)
+else:
+    show_vis_topics(topic_distribution(collection),Name, n_topics)
 

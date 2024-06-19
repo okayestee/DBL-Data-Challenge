@@ -48,7 +48,7 @@ def compare_collections_and_visualize(db: Database, collection_name_1: str, coll
 
 # Example usage:
 client = MongoClient('mongodb://localhost:27017/')
-db = client['AirplaneMode']
+db = client['DBL']
 
 # Assuming 'timeframe_trees_user' and 'timeframe_trees_airline' are the collections to compare
 compare_collections_and_visualize(db, 'timeframe_trees_user', 'timeframe_trees_airline')

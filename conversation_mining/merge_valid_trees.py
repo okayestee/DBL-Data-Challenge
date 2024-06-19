@@ -1,10 +1,9 @@
 from pymongo import MongoClient
 from tqdm import tqdm
 
-def merge_valid_trees():
-    # Connect to MongoDB
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client.DBL
+# Connect to MongoDB
+client = MongoClient('mongodb://localhost:27017/')
+db = client.AirplaneMode
 
     # Get collections
     valid_trees_user = db.valid_trees_user

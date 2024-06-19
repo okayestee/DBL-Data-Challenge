@@ -15,7 +15,8 @@ def get_reply_by_index(tree: dict, reply_index: int) -> dict:
     """
 
     if 'children' in tree:
-        reply = tree['children'][0] 
+        reply_key = list(tree['children'][reply_index].keys())[0]
+        reply = tree['children'][0][reply_key]
     else:
         reply = {}
 
@@ -30,7 +31,7 @@ def get_convo(tree_doc: dict) -> list[dict]:
     """
 
     # Get the first tweet
-    original_tweet = tree_doc
+    original_tweet = tree_doc['tree_data']
     original_tweet_data = original_tweet['data']
 
     # Initialize the conversation list
@@ -40,7 +41,7 @@ def get_convo(tree_doc: dict) -> list[dict]:
     next_reply = get_reply_by_index(original_tweet, 0)
 
     # Recurse over the entire conversation and add each tweet visited to the conversation
-    while len(next_reply['children']) != 0:
+    while len(next_reply) != 0:
         convo.append(next_reply['data'])
         next_reply = get_reply_by_index(next_reply, 0)
     
@@ -194,7 +195,7 @@ def get_tree_docs(collection, topic: str = '') -> list:
 
         # If a topic is specified, append only the docs about the topic
         if topic != '':
-            if tree_doc['data']['topic'] == topic:
+            if tree_doc['tree_data']['data']['topic'] == topic:
                 tree_docs.append(tree_doc)        
         else:
             tree_docs.append(tree_doc)
@@ -217,7 +218,7 @@ def get_evolution_stats(tree_docs, desired_stats= 'combined') -> dict:
     user_compounds: list[list[float]] = list()
     
     for tree in tree_docs:
-        starting_user_id = tree['data']['user']['id']
+        starting_user_id = tree['tree_data']['data']['user']['id']
         conversation = get_convo(tree)
         if is_airline_userID(starting_user_id):
             compound_scores = extract_compounds_from_convo_VADER(conversation) # CHANGE THIS TO THE extract_compound_from_convo_vars FORM ONCE SENTIMENT VARS HAVE BEEN ADDED

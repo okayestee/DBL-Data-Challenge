@@ -21,9 +21,13 @@ senti_evo.plot_evos(evolution_statistics)
 
 
 # Get the topic sentiment evolution chart
-topics = ['Baggage', 'Delay']
-airline_collection_names = ['American', 'KLM', 'Lufthanse']
+topics = ['Baggage', 'Delay'] ## Fill in the topics we're looking for
+airline_collection_names = ['American', 'AirFrance', 'Lufthanse'] ## Make sure the collection names match for each airline
 
+
+
+# No need to edit the stuff below
+# _____________________________________________________________________
 dictionary_topics: dict[str, dict[str, float]] = {}
 
 for topic in topics:
@@ -39,5 +43,5 @@ for topic in topics:
         perc_list.append(dictionary_topics[topic][airline])
     inc_percentages.append(perc_list)
 
-senti_evo.plot_increasing_per_topic_per_airline(['Baggage'], ['American'], inc_percentages)
+senti_evo.plot_increasing_per_topic_per_airline(topics, airline_collection_names, inc_percentages)
 
