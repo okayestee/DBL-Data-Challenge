@@ -1,0 +1,27 @@
+import fitz  # PyMuPDF
+from markdownify import markdownify as md
+
+# Function to extract text from PDF
+def extract_text_from_pdf(pdf_path):
+    text = ""
+    document = fitz.open(pdf_path)
+    for page_num in range(len(document)):
+        page = document.load_page(page_num)
+        text += page.get_text()
+    return text
+
+# Function to convert text to Markdown
+def convert_text_to_markdown(text, output_path):
+    markdown_text = md(text)
+    with open(output_path, "w", encoding="utf-8") as file:
+        file.write(markdown_text)
+
+# Paths to the input PDF and output Markdown file
+pdf_path = "C:/Users/20232815/OneDrive - TU Eindhoven/Documents/JBG030 - DBL Data Challenge/Manual/Manual_DBL.pdf"
+output_path = "C:/Users/20232815/OneDrive - TU Eindhoven/Documents/JBG030 - DBL Data Challenge/Manual/readme.md"
+
+# Extract text from the PDF and convert to Markdown
+pdf_text = extract_text_from_pdf(pdf_path)
+convert_text_to_markdown(pdf_text, output_path)
+
+print("Conversion completed!")
