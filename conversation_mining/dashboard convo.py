@@ -11,11 +11,11 @@ def run_script(script_path):
 
 def main():
     scripts = [
-        # "conversation_mining\\filter_replies.py",
-        # "conversation_mining\\collect_starting_conversations.py",
-        # "conversation_mining\\user_starting_convo.py",
-        # "conversation_mining\\airline_starting_convo.py",
-        # "conversation_mining\\user_trees.py",
+        "conversation_mining\\filter_replies.py",
+        "conversation_mining\\collect_starting_conversations.py",
+        "conversation_mining\\user_starting_convo.py",
+        "conversation_mining\\airline_starting_convo.py",
+        "conversation_mining\\user_trees.py",
         "conversation_mining\\airline_trees.py",
         "conversation_mining\\timeframe_user_trees.py",  
         "conversation_mining\\timeframe_airline_trees.py",
