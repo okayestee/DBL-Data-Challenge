@@ -4,7 +4,7 @@ import pymongo
 # Connect to the database
 client = pymongo.MongoClient("mongodb://localhost:27017/") ## Connect to MongoDB
 db = client['DBL'] ## Use the DBL database
-collection = db['valid_trees_airline'] ## Choose a collection of conversations
+collection = db['timeframe_trees_merged'] ## Choose a collection of conversations
 
 # Get the evolution statistics
 evolution_statistics = senti_evo.get_evolution_stats(senti_evo.get_tree_docs(collection))
@@ -18,11 +18,13 @@ print(senti_evo.get_increasing_decreasing_stats(evolution_statistics))
 
 # Create a bar chart of the evolutions
 senti_evo.plot_evos(evolution_statistics)
+senti_evo.plot_evo_non_evo(evolution_statistics)
+senti_evo.plot_inc_dec(evolution_statistics)
 
 
 # Get the topic sentiment evolution chart
-topics = ['Baggage', 'Delay'] ## Fill in the topics we're looking for
-airline_collection_names = ['American', 'AirFrance', 'Lufthanse'] ## Make sure the collection names match for each airline
+topics = ['Airline', 'Undefined', 'Posted', 'Delays', 'Response'] ## Fill in the topics we're looking for
+airline_collection_names = ['AmericanAir', 'AirFrance', 'Lufthansa'] ## Make sure the collection names match for each airline
 
 
 
@@ -33,7 +35,8 @@ dictionary_topics: dict[str, dict[str, float]] = {}
 for topic in topics:
     dictionary_topics[topic] = dict()
     for airline in airline_collection_names:
-        dictionary_topics[topic][airline] = senti_evo.get_data_for_topics(db[airline], topic)['perc. increasing (only evolutions)']
+        print(senti_evo.get_data_for_topics(db[airline], topic))
+        dictionary_topics[topic][airline] = senti_evo.get_increasing_decreasing_stats(senti_evo.get_data_for_topics(db[airline], topic))['perc. increasing (only evolutions)']
 
 inc_percentages: list[list[float]] = []
 
@@ -44,4 +47,7 @@ for topic in topics:
     inc_percentages.append(perc_list)
 
 senti_evo.plot_increasing_per_topic_per_airline(topics, airline_collection_names, inc_percentages)
+
+
+
 

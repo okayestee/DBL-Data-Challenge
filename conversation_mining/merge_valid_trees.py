@@ -1,9 +1,11 @@
 from pymongo import MongoClient
 from tqdm import tqdm
 
+
+def merge_valid_trees():
 # Connect to MongoDB
-client = MongoClient('mongodb://localhost:27017/')
-db = client.AirplaneMode
+    client = MongoClient('mongodb://localhost:27017/')
+    db = client.DBL
 
     # Get collections
     valid_trees_user = db.valid_trees_user
@@ -24,7 +26,7 @@ db = client.AirplaneMode
             valid_trees_merged.insert_one(document)
             pbar.update(1)
 
-    print("Merge completed.")
+print("Merge completed.")
 
 # Call the function to execute
 merge_valid_trees()

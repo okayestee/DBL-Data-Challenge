@@ -1,4 +1,5 @@
 from numpy import append, mean
+from sympy import total_degree
 import VADER_implementation as v_implement
 import matplotlib.pyplot as plt
 import numpy as np
@@ -195,8 +196,9 @@ def get_tree_docs(collection, topic: str = '') -> list:
 
         # If a topic is specified, append only the docs about the topic
         if topic != '':
-            if tree_doc['tree_data']['data']['topic'] == topic:
-                tree_docs.append(tree_doc)        
+            if 'topic' in tree_doc['tree_data']['data']:    
+                if tree_doc['tree_data']['data']['topic'] == topic:
+                    tree_docs.append(tree_doc)        
         else:
             tree_docs.append(tree_doc)
 
@@ -236,9 +238,9 @@ def get_evolution_stats(tree_docs, desired_stats= 'combined') -> dict:
 
             progress_counter += 1
 
-        # Give an update every 10% of progress
-        if progress_counter % (collection_size // 10) == 0:
-            print(f'Progress: {progress_counter} / {collection_size}')
+        # # Give an update every 10% of progress
+        # if progress_counter % (collection_size // 10) == 0:
+        #     print(f'Progress: {progress_counter} / {collection_size}')
 
     # Print the results to the terminal
     if desired_stats == 'airline':
@@ -293,8 +295,12 @@ def get_increasing_decreasing_stats(evolutions: dict[str, int]) -> dict:
     
     total_evolutions = inc_dec_stats['amount_increasing'] + inc_dec_stats['amount_decreasing']
     
+    if total_amount == 0:
+        total_amount = 1
     inc_dec_stats['perc. increasing (all conversations)'] = round((inc_dec_stats['amount_increasing'] / total_amount) * 100, 2)
     inc_dec_stats['perc. decreasing (all conversations)'] = round((inc_dec_stats['amount_decreasing'] / total_amount) * 100, 2)
+    if total_evolutions == 0:
+        total_evolutions = 1
     inc_dec_stats['perc. increasing (only evolutions)'] = round((inc_dec_stats['amount_increasing'] / total_evolutions) * 100, 2)
     inc_dec_stats['perc. decreasing (only evolutions)'] = round((inc_dec_stats['amount_decreasing'] / total_evolutions) * 100, 2)
 
