@@ -396,4 +396,4 @@ def plot_increasing_per_topic_per_airline(topics: list[str], airlines: list[str]
     # Show the plot
     plt.show()
 
-plot_increasing_per_topic_per_airline(['Baggage', 'Delays', 'Cancellations'], ['American Air', 'KLM', 'Lufthansa'], [[10,20, 7], [40, 50, 35], [34,26,29]])
+# plot_increasing_per_topic_per_airline(['Baggage', 'Delays', 'Cancellations'], ['American Air', 'KLM', 'Lufthansa'], [[10,20, 7], [40, 50, 35], [34,26,29]])
