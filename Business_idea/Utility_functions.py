@@ -94,9 +94,9 @@ def filter_tweets_by_mention(collection, user_handle):
             mentions.append(tweet)
     return mentions
 
-AmericanAir_tweets = db['AmericanAir_tweets']
-for tweet in filter_tweets_by_mention(db['Sentiment_included'], 'AmericanAir'):
-    AmericanAir_tweets.insert_one(tweet)
+# AmericanAir_tweets = db['AmericanAir_tweets']
+# for tweet in filter_tweets_by_mention(db['Sentiment_included'], 'AmericanAir'):
+#     AmericanAir_tweets.insert_one(tweet)
 
 
 

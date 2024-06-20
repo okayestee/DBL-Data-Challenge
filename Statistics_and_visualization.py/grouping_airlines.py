@@ -47,7 +47,7 @@ def get_collection_name(user_name):
     return None
 
 # Processing valid_trees_airline collection
-original_collection = db['valid_trees_airline']
+original_collection = db['timeframe_trees_airline']
 
 # Fetch all documents from the original collection
 documents = original_collection.find()
@@ -91,7 +91,7 @@ def traverse_tree(node):
     return None
 
 # Processing valid_trees_user collection
-original_collection = db['valid_trees_user']
+original_collection = db['timeframe_trees_user']
 documents = list(original_collection.find())
 
 # Progress bar setup
